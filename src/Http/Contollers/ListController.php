@@ -9,7 +9,6 @@ class ListController
 {
     public function list(Request $request, string $list)
     {
-
         return ListComponent::listHandler($request, $list);
     }
 

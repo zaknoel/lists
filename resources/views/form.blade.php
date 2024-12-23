@@ -52,7 +52,7 @@
 @endpush
 @push("scripts")
     {!! $scripts !!}
-    <script src="/vendor/zak/lists/jquery.repeater/jquery.repeater.min.js?t=2324"></script>
+    <script src="/vendor/lists/jquery.repeater/jquery.repeater.min.js?t=2324"></script>
     <script>
         $(".repeater").repeater({
             show: function () {

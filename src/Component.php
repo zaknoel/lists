@@ -41,6 +41,7 @@ class Component
      */
     public function __construct($data)
     {
+        $data=array_filter($data);
         //default value
         $default = [
             "actions" => array_filter([
@@ -77,9 +78,41 @@ class Component
         //dd($this->options->data);
     }
 
-    public static function init(array $data): static
+    public static function init(
+        string $model,
+        array $fields,
+        string $singleLabel,
+        string $label,
+        callable|null $onSearchModel=null,
+        array $pages = [],
+        string $customScript = "",
+        callable|null $onList = null,
+        callable|null $onBeforeSave = null,
+        callable|null $onAfterSave = null,
+        callable|null $onModel = null,
+        callable|bool $canAddItem = false,
+        callable|bool $canEditItem = false,
+        callable|bool $canDeleteItem = false,
+        array $actions = [],
+    ): static
     {
-        return new static($data);
+        return new static([
+            "model" => $model,
+            "fields" => $fields,
+            "singleLabel" => $singleLabel,
+            "label" => $label,
+            "onSearchModel" => $onSearchModel,
+            "pages" => $pages,
+            "customScript" => $customScript,
+            "onList" => $onList,
+            "OnBeforeSave" => $onBeforeSave,
+            "OnAfterSave" => $onAfterSave,
+            "onModel" => $onModel,
+            "canAddItem" => $canAddItem,
+            "canEditItem" => $canEditItem,
+            "canDeleteItem" => $canDeleteItem,
+            "actions" => $actions,
+        ]);
     }
 
     public function canEdit($item)
@@ -162,7 +195,7 @@ class Component
 
     public function getSingleLabel(): string
     {
-        return $this->singleLabel;
+        return str($this->singleLabel)->lower();
     }
 
     public function getLabel(): string
@@ -178,8 +211,8 @@ class Component
             type="text/javascript"></script>'
             ],
             'checkbox' => [
-                '<link rel="stylesheet" href="/vendor/zak/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
-                '<script src="/vendor/zak/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>',
+                '<link rel="stylesheet" href="/vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
+                '<script src="/vendor/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>',
             ]
         ];
 

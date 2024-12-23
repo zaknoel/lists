@@ -3,7 +3,6 @@
 namespace Zak\Lists;
 
 
-use App\Zak\Component\ListImport;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -96,7 +95,7 @@ class ListComponent
             });
             $data->rawColumns($columns);
             if ($component->actions) {
-                $data->addColumn("action", fn($item) => view('zak.lists::actions',
+                $data->addColumn("action", fn($item) => view('lists::actions',
 
                     ["item" => $item, "actions" => $component->getActions($item), "list" => $list]));
             }
@@ -127,7 +126,7 @@ class ListComponent
             }
         }
 
-        return view("zak.lists::list", [
+        return view("lists::list", [
             "length" => $length,
             "curSort" => $curSort,
             "component" => $component,
@@ -165,7 +164,7 @@ class ListComponent
             }
             return $field;
         });
-        return view('zak.lists::detail',
+        return view('lists::detail',
             [
                 "pages" => $component->pages,
                 'component' => $component,
@@ -193,7 +192,7 @@ class ListComponent
         });
 
 
-        return view("zak.lists::form",
+        return view("lists::form",
             [
                 "item" => $item,
                 "scripts" => $component->scripts(),
@@ -286,7 +285,7 @@ class ListComponent
             return $field;
         });
 
-        return view("zak.lists::form",
+        return view("lists::form",
             [
                 "item" => $item,
                 "scripts" => $component->scripts(),
@@ -386,7 +385,7 @@ class ListComponent
             $view = "";
         }
 
-        return view('zak.lists::detail',
+        return view('lists::detail',
             [
                 'component' => $component,
                 "view" => $view,

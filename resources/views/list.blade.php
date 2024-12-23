@@ -175,10 +175,10 @@
     </div>
 @endsection
 @push('styles')
-    <link rel="stylesheet" href="/vendor/zak/lists/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" href="/vendor/lists/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
 @endpush
 @push("scripts")
-    <script src="vendor/zak/lists/datatables.net/js/jquery.dataTables.min.js"></script>
+    <script src="/vendor/lists/datatables.net/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/buttons/1.5.1/js/dataTables.buttons.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/pdfmake.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.32/vfs_fonts.js"></script>
@@ -186,7 +186,7 @@
     <script src="https://cdn.datatables.net/buttons/1.5.1/js/buttons.print.min.js"></script>
     <script type="text/javascript" charset="utf8"
             src="https://cdn.datatables.net/plug-ins/1.11.5/i18n/ru.json"></script>
-    <script type="text/javascript" src="/vendor/zak/lists/sortable.js"></script>
+    <script type="text/javascript" src="/vendor/lists/sortable.js"></script>
     {!! $component->scripts() !!}
     <script>
         $(function () {
@@ -249,7 +249,7 @@
                     orderable: false // Disable sorting for the first column
                 }
             ],
-            order: [[{{(int)$curSort[2]+1}}, '{{$curSort[1]}}']],
+            order: [[{{$component->actions?(int)$curSort[2]+1:(int)$curSort[2]}}, '{{$curSort[1]}}']],
             columns: [
                     @if($component->actions)
                 {

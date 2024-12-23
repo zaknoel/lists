@@ -91,10 +91,10 @@ abstract class Field
 
     public function show()
     {
-        $view = "zak.lists::fields.".$this->componentName();
+        $view = "lists::fields.".$this->componentName();
         if (!view()->exists($view)) {
             //create view
-            $file = resource_path("views/vendor/zak/lists/fields/".$this->componentName().".blade.php");
+            $file = resource_path("views/vendor/lists/fields/".$this->componentName().".blade.php");
             if (!file_exists($file)) {
                 file_put_contents($file, "<div></div>");
             }
@@ -334,7 +334,7 @@ abstract class Field
 
     public function showFilter()
     {
-        return view('zak:list::filter.main', ['field' => $this]);
+        return view('lists::filter.main', ['field' => $this]);
     }
 
     public function filteredValue()
@@ -345,11 +345,11 @@ abstract class Field
     public function filterContent()
     {
 
-        $view = "zak.lists::filter.".$this->componentName();
+        $view = "lists::filter.".$this->componentName();
 
         if (!view()->exists($view)) {
             //create view
-            $file = resource_path("views/vendor/zak/lists/filter/".$this->componentName().".blade.php");
+            $file = resource_path("views/vendor/lists/filter/".$this->componentName().".blade.php");
             if (!file_exists($file)) {
                 file_put_contents($file, "<div></div>");
             }

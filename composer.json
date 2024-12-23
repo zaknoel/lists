@@ -20,7 +20,7 @@
         "spatie/laravel-package-tools": "^1.14.0",
         "illuminate/contracts": "^11.0",
         "laravel/nova": "*",
-        "yajra/laravel-datatables": "^10.0",
+        "yajra/laravel-datatables": "^11.0",
         "maatwebsite/excel": "*"
     },
     "require-dev": {
@@ -40,7 +40,10 @@
         "psr-4": {
             "Zak\\Lists\\": "src/",
             "Zak\\Lists\\Database\\Factories\\": "database/factories/"
-        }
+        },
+        "files": [
+            "src/helper.php"
+        ]
     },
     "autoload-dev": {
         "psr-4": {
