@@ -8,9 +8,12 @@ use Illuminate\Database\Eloquent\Model;
 class UserOption extends Model
 {
     use HasFactory;
-    protected $table='_user_list_options';
-    protected $guarded=[];
-    protected $casts=[
-        "value" => "json"
+
+    protected $table = '_user_list_options';
+
+    protected $guarded = [];
+
+    protected $casts = [
+        'value' => 'json',
     ];
 }

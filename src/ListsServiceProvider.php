@@ -5,7 +5,6 @@ namespace Zak\Lists;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
-use function Symfony\Component\Translation\t;
 
 class ListsServiceProvider extends PackageServiceProvider
 {
@@ -30,7 +29,7 @@ class ListsServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishAssets()
                     ->publishMigrations();
-                    //->copyAndRegisterServiceProviderInApp();
+                //->copyAndRegisterServiceProviderInApp();
             });
         //->hasMigration('create_lists_table')
         //->hasCommand(ListsCommand::class);

@@ -1,6 +1,7 @@
 <?php
 
 namespace Zak\Lists;
+
 use Closure;
 use Exception;
 use Illuminate\Support\Arr;
@@ -11,29 +12,50 @@ use Zak\Lists\Models\UserOption;
 
 class Component
 {
-    public string $model = "";
-    /** @var list<Field> $fields */
+    public string $model = '';
+
+    /** @var list<Field> */
     public array $fields = [];
-    /** @var list<Action> $actions */
+
+    /** @var list<Action> */
     public array $actions = [];
+
     public bool $delete = true;
-    public string $singleLabel = "";
-    public string $label = "";
-    public Closure|null $onModel = null;
-    public Closure|null $onSearchModel = null;
+
+    public string $singleLabel = '';
+
+    public string $label = '';
+
+    public ?Closure $onModel = null;
+
+    public ?Closure $onSearchModel = null;
+
     public array $pages = [];
+
     public UserOption $options;
-    public string $grid_id = "";
-    public string $customScript = "";
-    private Closure|null $OnBeforeSave = null;
-    private Closure|null $onAction = null;
-    private Closure|null $OnAfterSave = null;
-    private Closure|null $OnBeforeDelete = null;
-    private Closure|null $OnAfterDelete = null;
-    private Closure|null $OnList = null;
-    private Closure|null $OnDetail = null;
+
+    public string $grid_id = '';
+
+    public string $customScript = '';
+
+    private ?Closure $OnBeforeSave = null;
+
+    private ?Closure $onAction = null;
+
+    private ?Closure $OnAfterSave = null;
+
+    private ?Closure $OnBeforeDelete = null;
+
+    private ?Closure $OnAfterDelete = null;
+
+    private ?Closure $OnList = null;
+
+    private ?Closure $OnDetail = null;
+
     private Closure|bool $canAddItem = false;
+
     private Closure|bool $canEditItem = false;
+
     private Closure|bool $canDeleteItem = false;
 
     /**
@@ -41,35 +63,35 @@ class Component
      */
     public function __construct($data)
     {
-        $data=array_filter($data);
+        $data = array_filter($data);
         //default value
         $default = [
-            "actions" => array_filter([
-                Action::make("Просмотр")->showAction()->default(),
-                Action::make("Редактировать")->editAction(),
-                Action::make("Удалить")->deleteAction(),
+            'actions' => array_filter([
+                Action::make('Просмотр')->showAction()->default(),
+                Action::make('Редактировать')->editAction(),
+                Action::make('Удалить')->deleteAction(),
             ]),
         ];
         $default = array_merge($default, $data);
-        Arr::map($default, fn($value, $key) => $this->$key = $value);
-        if (!$this->model) {
-            throw new \RuntimeException("Model not set!");
+        Arr::map($default, fn ($value, $key) => $this->$key = $value);
+        if (! $this->model) {
+            throw new \RuntimeException('Model not set!');
         }
         $this->grid_id = $this->model;
         $this->options = UserOption::firstOrCreate(
             [
-                "user_id" => auth()->user()->id,
-                "name" => $this->grid_id
+                'user_id' => auth()->user()->id,
+                'name' => $this->grid_id,
             ],
             [
-                "user_id" => auth()->user()->id,
-                "name" => $this->grid_id,
-                "value" => [
-                    "columns" => [],
-                    "sort" => [],
-                    "filters" => [],
-                    'cur_sort' => []
-                ]
+                'user_id' => auth()->user()->id,
+                'name' => $this->grid_id,
+                'value' => [
+                    'columns' => [],
+                    'sort' => [],
+                    'filters' => [],
+                    'cur_sort' => [],
+                ],
             ]
 
         );
@@ -82,36 +104,30 @@ class Component
         string $model,
         array $fields,
         string $singleLabel,
-        string $label,
-        callable|null $onSearchModel=null,
+        string $label, ?callable $onSearchModel = null,
         array $pages = [],
-        string $customScript = "",
-        callable|null $onList = null,
-        callable|null $onBeforeSave = null,
-        callable|null $onAfterSave = null,
-        callable|null $onModel = null,
+        string $customScript = '', ?callable $onList = null, ?callable $onBeforeSave = null, ?callable $onAfterSave = null, ?callable $onModel = null,
         callable|bool $canAddItem = false,
         callable|bool $canEditItem = false,
         callable|bool $canDeleteItem = false,
         array $actions = [],
-    ): static
-    {
+    ): static {
         return new static([
-            "model" => $model,
-            "fields" => $fields,
-            "singleLabel" => $singleLabel,
-            "label" => $label,
-            "onSearchModel" => $onSearchModel,
-            "pages" => $pages,
-            "customScript" => $customScript,
-            "onList" => $onList,
-            "OnBeforeSave" => $onBeforeSave,
-            "OnAfterSave" => $onAfterSave,
-            "onModel" => $onModel,
-            "canAddItem" => $canAddItem,
-            "canEditItem" => $canEditItem,
-            "canDeleteItem" => $canDeleteItem,
-            "actions" => $actions,
+            'model' => $model,
+            'fields' => $fields,
+            'singleLabel' => $singleLabel,
+            'label' => $label,
+            'onSearchModel' => $onSearchModel,
+            'pages' => $pages,
+            'customScript' => $customScript,
+            'onList' => $onList,
+            'OnBeforeSave' => $onBeforeSave,
+            'OnAfterSave' => $onAfterSave,
+            'onModel' => $onModel,
+            'canAddItem' => $canAddItem,
+            'canEditItem' => $canEditItem,
+            'canDeleteItem' => $canDeleteItem,
+            'actions' => $actions,
         ]);
     }
 
@@ -150,6 +166,7 @@ class Component
         if (is_callable($this->OnBeforeSave) && $this->OnBeforeSave) {
             return call_user_func($this->OnBeforeSave, $model);
         }
+
         return $model;
     }
 
@@ -158,6 +175,7 @@ class Component
         if (is_callable($this->OnAfterSave) && $this->OnAfterSave) {
             return call_user_func($this->OnAfterSave, $model);
         }
+
         return $model;
     }
 
@@ -166,6 +184,7 @@ class Component
         if (is_callable($this->OnBeforeDelete) && $this->OnBeforeDelete) {
             return call_user_func($this->OnBeforeSave, $model);
         }
+
         return $model;
     }
 
@@ -174,6 +193,7 @@ class Component
         if (is_callable($this->OnAfterDelete) && $this->OnAfterDelete) {
             return call_user_func($this->OnAfterDelete, $model);
         }
+
         return $model;
     }
 
@@ -182,6 +202,7 @@ class Component
         if (is_callable($this->OnList) && $this->OnList) {
             return call_user_func($this->OnList, $model);
         }
+
         return $model;
     }
 
@@ -190,6 +211,7 @@ class Component
         if (is_callable($this->OnDetail) && $this->OnDetail) {
             return call_user_func($this->OnDetail, $model);
         }
+
         return $model;
     }
 
@@ -206,23 +228,24 @@ class Component
     public function scripts(): string
     {
         $scripts = [
-            "location" => [
+            'location' => [
                 '    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=f583857c-aaf5-454e-943b-d94c3e908c3f"
-            type="text/javascript"></script>'
+            type="text/javascript"></script>',
             ],
             'checkbox' => [
                 '<link rel="stylesheet" href="/vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
                 '<script src="/vendor/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>',
-            ]
+            ],
         ];
 
         $result = [];
         foreach ($scripts as $k => $v) {
-            if (Arr::where($this->fields, fn(Field $item) => $item->componentName() === $k)) {
+            if (Arr::where($this->fields, fn (Field $item) => $item->componentName() === $k)) {
                 $result[] = implode(PHP_EOL, $v);
             }
         }
         $result[] = $this->customScript;
+
         return implode(PHP_EOL, $result);
     }
 
@@ -232,14 +255,14 @@ class Component
         foreach ($this->fields as $field) {
             if (
                 $field->show_in_index
-                && (!$this->options->value["columns"] || in_array($field->attribute, $this->options->value["columns"], false))
+                && (! $this->options->value['columns'] || in_array($field->attribute, $this->options->value['columns'], false))
             ) {
                 if ($field instanceof Relation) {
-                    $rname = $field->relationName ?: str_replace("_id", "", $field->attribute);
+                    $rname = $field->relationName ?: str_replace('_id', '', $field->attribute);
                     if (method_exists($this->model, $rname)) {
                         $relations[] = $rname;
                     } else {
-                        file_put_contents(app_path('related_methods.log'), PHP_EOL . $this->model . '->' . $rname, FILE_APPEND);
+                        file_put_contents(app_path('related_methods.log'), PHP_EOL.$this->model.'->'.$rname, FILE_APPEND);
                     }
 
                 } elseif ($field instanceof BelongToMany) {
@@ -248,7 +271,10 @@ class Component
             }
         }
         $m = $this->model::query();
-        if ($relations) $m->with($relations);
+        if ($relations) {
+            $m->with($relations);
+        }
+
         return $this->OnSearchModel($m);
     }
 
@@ -258,6 +284,7 @@ class Component
         if (is_callable($this->onSearchModel) && $this->onSearchModel) {
             return call_user_func($this->onSearchModel, $model);
         }
+
         return $model;
     }
 
@@ -266,6 +293,7 @@ class Component
         if (is_callable($this->onModel) && $this->onModel) {
             return call_user_func($this->onModel, $model);
         }
+
         return $model;
     }
 
@@ -277,7 +305,7 @@ class Component
                 $actions[] = $action;
             }
         }
+
         return $actions;
     }
-
 }

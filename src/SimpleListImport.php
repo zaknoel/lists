@@ -8,7 +8,6 @@ class SimpleListImport implements FromCollection
 {
     private array $all;
 
-
     public function __construct($all)
     {
         $this->all = $all;
