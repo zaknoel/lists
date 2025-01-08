@@ -1,4 +1,4 @@
-@switch($field->type)
+@switch($field->getType())
     @case('text')
     @case('email')
         <div>
@@ -54,7 +54,7 @@
             <input type="date"   value="{{$field->filter_value["to"]??''}}" class="form-control form-control-sm mt-1" name="value_to">
         </div>
         @break
-    @case('datetime')
+    @case('datetime-local')
         <div class="input-group mb-3">
             <span class="input-group-text">от</span>
             <input type="datetime-local"  value="{{$field->filter_value["from"]??''}}" class="form-control form-control-sm mt-1" name="value_from">

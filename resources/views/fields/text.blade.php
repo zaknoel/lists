@@ -4,18 +4,29 @@
     <div class="repeater mb-3">
 
         <div data-repeater-list="{{$field->attribute}}">
-            @foreach(old($field->attribute, $field->value)??[""] as $key=>$value)
+            @foreach(old($field->attribute, $field->value?:[""]) as $key=>$value)
                 <div data-repeater-item class="row mb-3">
                     <div class="col-md-10">
-                        <input
-                            type="{{$field->getType()}}"
-                            @class(["form-control", 'is-invalid'=>$errors->has($field->attribute."[".$key."]")])
-                            name="i"
-                            value="{{array_key_exists($key, old($field->attribute)??[])?old($field->attribute)[$key]:$value}}"
-                            @required($field->isRequired())
-                            id="inputFor{{$field->attribute}}{{$key}}"
-                            placeholder="{{$field->showLabel()}}"
-                        >
+                        @if($field->rows>1)
+                            <textarea
+                                @class(["form-control", 'is-invalid'=>$errors->has($field->attribute."[".$key."]")])
+                                name="{{$field->attribute}}[{{$key}}]"
+                                @required($field->isRequired())
+                                id="inputFor{{$field->attribute}}{{$key}}"
+                                placeholder="{{$field->showLabel()}}"
+                                rows="{{$field->rows}}"
+                            >{{array_key_exists($key, old($field->attribute)??[])?old($field->attribute)[$key]:$value}}</textarea>
+                        @else
+                            <input
+                                type="{{$field->getType()}}"
+                                @class(["form-control", 'is-invalid'=>$errors->has($field->attribute."[".$key."]")])
+                                name="i"
+                                value="{{array_key_exists($key, old($field->attribute)??[])?old($field->attribute)[$key]:$value}}"
+                                @required($field->isRequired())
+                                id="inputFor{{$field->attribute}}{{$key}}"
+                                placeholder="{{$field->showLabel()}}"
+                            >
+                        @endif
                         @error($field->attribute."[".$key."]")
                         <div class="invalid-feedback">
                             {{$message}}
@@ -41,14 +52,25 @@
         </button>
     </div>
 @else
-    <input
-        type="{{$field->getType()}}"
-        @class(["form-control", 'is-invalid'=>$errors->has($field->attribute)])
-        name="{{$field->attribute}}"
-        value="{{old($field->attribute, ($field->value??$field->default))}}"
-        @required($field->isRequired())
-        id="inputFor{{$field->attribute}}"
-        placeholder="{{$field->showLabel()}}">
+    @if($field->rows>1)
+        <textarea
+            @class(["form-control", 'is-invalid'=>$errors->has($field->attribute)])
+            name="{{$field->attribute}}"
+            @required($field->isRequired())
+            id="inputFor{{$field->attribute}}"
+            placeholder="{{$field->showLabel()}}"
+            rows="{{$field->rows}}"
+        >{{old($field->attribute, ($field->value??$field->default))}}</textarea>
+    @else
+        <input
+            type="{{$field->getType()}}"
+            @class(["form-control", 'is-invalid'=>$errors->has($field->attribute)])
+            name="{{$field->attribute}}"
+            value="{{old($field->attribute, ($field->value??$field->default))}}"
+            @required($field->isRequired())
+            id="inputFor{{$field->attribute}}"
+            placeholder="{{$field->showLabel()}}">
+    @endif
     @error($field->attribute)
     <div class="invalid-feedback">
         {{$message}}

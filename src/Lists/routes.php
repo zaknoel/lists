@@ -28,67 +28,65 @@ return Component::init([
             ->filter(["active", "=", true])
         ,
     ],
-    'pages'=>[
-        "questions"=>[
-            'title'=>'Карта',
-            'view'=> static function(\App\Models\Route $item){
+    'pages' => [
+        "questions" => [
+            'title' => 'Карта',
+            'view' => static function (\App\Models\Route $item) {
 
-                $districts=$item->districts->pluck('id');
-                $cData=[];
-                $stat=[
-                    'store'=>0,
-                    'doctor'=>0,
-                    'number'=>0
+                $districts = $item->districts->pluck('id');
+                $cData = [];
+                $stat = [
+                    'store' => 0,
+                    'doctor' => 0,
+                    'number' => 0
                 ];
-                if($districts){
-                    $companies=Company::whereActive(true)
+                if ($districts) {
+                    $companies = Company::whereActive(true)
                         ->whereIn('district_id', $districts)
                         ->whereNotNull('location')
-                        ->get(['id', 'name', 'location'])
-                    ;
-                    $doctors=Doctor::whereActive(true)
+                        ->get(['id', 'name', 'location']);
+                    $doctors = Doctor::whereActive(true)
                         ->whereIn('district_id', $districts)
                         ->whereNotNull('location')
-                        ->get(['id', 'name', 'location'])
-                    ;
-                    $locs=[];
-                    foreach($companies as $v){
-                        if(isset($locs[$v->location])){
-                            $v->location=changeLocation($v->location);
+                        ->get(['id', 'name', 'location']);
+                    $locs = [];
+                    foreach ($companies as $v) {
+                        if (isset($locs[$v->location])) {
+                            $v->location = changeLocation($v->location);
                         }
-                        $cData["c_".$v->id]=[
-                            "id"=>$v->id,
-                            "location"=>$v->location,
-                            "name"=>$v->name,
-                            "type"=>"store",
+                        $cData["c_".$v->id] = [
+                            "id" => $v->id,
+                            "location" => $v->location,
+                            "name" => $v->name,
+                            "type" => "store",
                         ];
-                        $locs[$v->location]=1;
+                        $locs[$v->location] = 1;
                         $stat['store']++;
                     }
-                    foreach($doctors as $k=>$v){
-                        if(isset($locs[$v->location])){
-                            $v->location=changeLocation($v->location);
+                    foreach ($doctors as $k => $v) {
+                        if (isset($locs[$v->location])) {
+                            $v->location = changeLocation($v->location);
                         }
-                        $cData["d_".$v->id]=[
-                            "id"=>$v->id,
-                            "location"=>$v->location,
-                            "name"=>$v->name,
-                            "type"=>"doctor",
+                        $cData["d_".$v->id] = [
+                            "id" => $v->id,
+                            "location" => $v->location,
+                            "name" => $v->name,
+                            "type" => "doctor",
                         ];
-                        $locs[$v->location]=1;
+                        $locs[$v->location] = 1;
                         $stat['doctor']++;
                     }
                 }
-                $data=$item->data??[];
-                foreach ($data as $k=>$v){
-                    $key=$v['key'];
-                    if($cData[$key]){
+                $data = $item->data ?? [];
+                foreach ($data as $k => $v) {
+                    $key = $v['key'];
+                    if ($cData[$key]) {
                         $stat['number']++;
-                        $cData[$key]['number']=$v['number'];
+                        $cData[$key]['number'] = $v['number'];
                     }
                 }
-                $first=array_key_first($cData);
-                $startLoc=explode(",", $cData[$first]['location']);
+                $first = array_key_first($cData);
+                $startLoc = explode(",", $cData[$first]['location']);
 
 
                 return view('pages.route_map',

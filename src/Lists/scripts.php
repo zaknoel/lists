@@ -42,14 +42,15 @@ return Component::init([
                 $branched = [];
                 global $used_quests;
                 $used_quests = [];
-                $all_quests = Question::whereScriptId($item->id)->orderBy('parent_id', 'asc')->orderBy('number', 'asc')->get();
+                $all_quests = Question::whereScriptId($item->id)->orderBy('parent_id', 'asc')->orderBy('number',
+                    'asc')->get();
                 foreach ($all_quests as $v) {
                     if (!$v->parent_id) {
                         $v->number;
                         $quests[] = $v;
                     } else {
                         $parent = $all_quests->where('id', $v->parent_id)->first();
-                        $v->number = $parent?->number . '.' . $v->number;
+                        $v->number = $parent?->number.'.'.$v->number;
                         $branched[$v->parent_id][$v->variant][$v->id] = $v;
                     }
                 }

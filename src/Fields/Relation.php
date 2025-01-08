@@ -6,47 +6,70 @@ class Relation extends Select
 {
     public bool $searchable = false;
     public string $model;
-    public string $field="name";
-    public array $filter=[];
-    public string $relationName='';
+    public string $field = "name";
+    public array $filter = [];
+
+    public string $relationName = '';
+    public string $list = '';
+    public bool $createButton = false;
+    public function list($list): static
+    {
+        $this->list = $list;
+        return $this;
+    }
+
+    public function createButton($create = true): static
+    {
+        $this->createButton = $create;
+        return $this;
+    }
+
+    public function searchable(): static
+    {
+        $this->searchable = false;
+        return $this;
+    }
+
     public function model($model): static
     {
-        $this->model=$model;
+        $this->model = $model;
         return $this;
     }
+
     public function relationName($name): static
     {
-        $this->relationName=$name;
+        $this->relationName = $name;
         return $this;
     }
-    public function filter($filter=[]): static
+
+    public function filter($filter = []): static
     {
-        $this->filter[]=$filter;
+        $this->filter[] = $filter;
         return $this;
     }
 
     public function field($field): static
     {
-        $this->field=$field;
+        $this->field = $field;
         return $this;
     }
+
     public function componentName(): string
     {
         return "relation";
     }
-    public function beforeShow()
+
+    public function handleFill()
     {
-        parent::beforeShow();
-        if($this->selected){
-            $query=$this->model::whereIn("id", $this->selected);
-            foreach ($this->filter as $filter){
-                if(!isset($filter[1]))
-                {
+        parent::handleFill();
+        if ($this->selected) {
+            $query = $this->model::whereIn("id", $this->selected);
+            foreach ($this->filter as $filter) {
+                if (!isset($filter[1])) {
                     $query->{$filter[0]}();
-                }
-                elseif($filter[1]==="in"){
+                } elseif ($filter[1] === "in") {
                     $query->whereIn($filter[0], $filter[2]);
-                }else{
+                } else {
                     $query->where($filter[0], $filter[1], $filter[2]);
                 }
             }
@@ -54,15 +77,24 @@ class Relation extends Select
             $this->enum($query->get(["id", $this->field])->pluck($this->field, "id")->toArray());
         }
     }
-    public function changeListValue($value){
-        if($value){
-            return $this->item->{str_replace("_id", "", $this->attribute)}?->{$this->field};
-        }
-        return  $value;
 
+    public function detailHandler()
+    {
+        $this->indexHandler();
     }
-    public function changeDetailValue($value){
-        return $this->changeListValue($value);
+
+    public function indexHandler()
+    {
+        $value = $this->item->{$this->attribute};
+        if ($value) {
+            $attr=str_replace("_id", "", $this->attribute);
+            if($this->list){
+                $item = $this->item->{$attr};
+                $this->value = "<a class='text-secondary' href='".route('lists_detail', [$this->list, $item])."' target='_blank'>".$item->{$this->field}."</a>";
+            }else{
+                $this->value = $this->item->{$attr}?->{$this->field};
+            }
+        }
     }
 
 }

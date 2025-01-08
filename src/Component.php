@@ -1,9 +1,12 @@
 <?php
 
 namespace Zak\Lists;
+
+use Arr;
+use Artisan;
 use Closure;
 use Exception;
-use Illuminate\Support\Arr;
+use InvalidArgumentException;
 use Zak\Lists\Fields\BelongToMany;
 use Zak\Lists\Fields\Field;
 use Zak\Lists\Fields\Relation;
@@ -11,49 +14,56 @@ use Zak\Lists\Models\UserOption;
 
 class Component
 {
-    public string $model = "";
-    /** @var list<Field> $fields */
-    public array $fields = [];
-    /** @var list<Action> $actions */
-    public array $actions = [];
-    public bool $delete = true;
-    public string $singleLabel = "";
-    public string $label = "";
-    public Closure|null $onModel = null;
-    public Closure|null $onSearchModel = null;
-    public array $pages = [];
     public UserOption $options;
     public string $grid_id = "";
-    public string $customScript = "";
-    private Closure|null $OnBeforeSave = null;
-    private Closure|null $onAction = null;
-    private Closure|null $OnAfterSave = null;
-    private Closure|null $OnBeforeDelete = null;
-    private Closure|null $OnAfterDelete = null;
-    private Closure|null $OnList = null;
-    private Closure|null $OnDetail = null;
-    private Closure|bool $canAddItem = false;
-    private Closure|bool $canEditItem = false;
-    private Closure|bool $canDeleteItem = false;
+    private string $className;
 
-    /**
-     * @throws Exception
-     */
-    public function __construct($data)
-    {
-        $data=array_filter($data);
-        //default value
-        $default = [
-            "actions" => array_filter([
-                Action::make("Просмотр")->showAction()->default(),
-                Action::make("Редактировать")->editAction(),
-                Action::make("Удалить")->deleteAction(),
-            ]),
-        ];
-        $default = array_merge($default, $data);
-        Arr::map($default, fn($value, $key) => $this->$key = $value);
+    public function __construct(
+        protected string $model,
+        protected string $label,
+        protected string $singleLabel,
+        protected array $fields = [],
+        protected ?array $actions = null,
+        protected ?array $pages = null,
+        protected string $customScript = "",
+
+        protected ?Closure $OnQuery = null,
+        protected ?Closure $OnIndexQuery = null,
+        protected ?Closure $OnDetailQuery = null,
+        protected ?Closure $OnEditQuery = null,
+
+        protected ?Closure $OnBeforeSave = null,
+        protected ?Closure $OnAfterSave = null,
+        protected ?Closure $OnBeforeDelete = null,
+        protected ?Closure $OnAfterDelete = null,
+        protected ?Closure $canView = null,
+        protected ?Closure $canViewAny = null,
+        protected ?Closure $canAdd = null,
+        protected ?Closure $canEdit = null,
+        protected ?Closure $canDelete = null,
+    ) {
+        //init component
+        $this->className = class_basename($this->model);
+        $user = auth()->user();
+        $this->checkPolice();
+        $this->canAdd = $this->canAdd ?? fn() => $user->can("add", $this->model);
+        $this->canEdit = $this->canEdit ?? static fn($item) => $user->can("edit", $item);
+        $this->canDelete = $this->canDelete ?? static fn($item) => $user->can("delete", $item);
+        $this->canView = $this->canView ?? static fn($item) => $user->can("view", $item);
+        $this->canViewAny = $this->canViewAny ?? fn() => $user->can("viewAny", $this->model);
+
+        if (!$this->userCanViewAny()) {
+            abort(403);
+        }
+        if (is_null($this->actions)) {
+            $this->actions = array_filter([
+                Action::make("Просмотр")->showAction()->default()->show($this->canView),
+                Action::make("Редактировать")->editAction()->show($this->canEdit),
+                Action::make("Удалить")->deleteAction()->show($this->canDelete),
+            ]);
+        }
         if (!$this->model) {
-            throw new \RuntimeException("Model not set!");
+            throw new InvalidArgumentException("Model not set!");
         }
         $this->grid_id = $this->model;
         $this->options = UserOption::firstOrCreate(
@@ -73,124 +83,35 @@ class Component
             ]
 
         );
-        //$this->options->data=$this->options->value;
 
-        //dd($this->options->data);
     }
 
-    public static function init(
-        string $model,
-        array $fields,
-        string $singleLabel,
-        string $label,
-        callable|null $onSearchModel=null,
-        array $pages = [],
-        string $customScript = "",
-        callable|null $onList = null,
-        callable|null $onBeforeSave = null,
-        callable|null $onAfterSave = null,
-        callable|null $onModel = null,
-        callable|bool $canAddItem = false,
-        callable|bool $canEditItem = false,
-        callable|bool $canDeleteItem = false,
-        array $actions = [],
-    ): static
+    private function checkPolice(): void
     {
-        return new static([
-            "model" => $model,
-            "fields" => $fields,
-            "singleLabel" => $singleLabel,
-            "label" => $label,
-            "onSearchModel" => $onSearchModel,
-            "pages" => $pages,
-            "customScript" => $customScript,
-            "onList" => $onList,
-            "OnBeforeSave" => $onBeforeSave,
-            "OnAfterSave" => $onAfterSave,
-            "onModel" => $onModel,
-            "canAddItem" => $canAddItem,
-            "canEditItem" => $canEditItem,
-            "canDeleteItem" => $canDeleteItem,
-            "actions" => $actions,
-        ]);
-    }
-
-    public function canEdit($item)
-    {
-        return $this->canEditItem && $this->canEditItem($item);
-    }
-
-    public function canEditItem($item): bool
-    {
-        return is_callable($this->canEditItem) ? call_user_func($this->canEditItem, $item) : $this->canEditItem;
-    }
-
-    public function canDelete($item)
-    {
-        return $this->canDeleteItem && $this->canDeleteItem($item);
-    }
-
-    public function canDeleteItem($item): bool
-    {
-        return is_callable($this->canDeleteItem) ? call_user_func($this->canDeleteItem, $item) : $this->canDeleteItem;
-    }
-
-    public function canAdd()
-    {
-        return $this->canAddItem && $this->canAddItem();
-    }
-
-    public function canAddItem(): bool
-    {
-        return is_callable($this->canAddItem) ? call_user_func($this->canAddItem) : $this->canAddItem;
-    }
-
-    public function OnBeforeSave($model)
-    {
-        if (is_callable($this->OnBeforeSave) && $this->OnBeforeSave) {
-            return call_user_func($this->OnBeforeSave, $model);
+        $path = app_path('Policies/'.$this->className."Policy.php");
+        if (!file_exists($path)) {
+            Artisan::call('make:policy', ['name' => $this->className."Policy", '-m' => $this->model]);
+            $policyFilePath = app_path('Policies/'.$this->className.'Policy.php');
+            $policyContent = file_get_contents($policyFilePath);
+            //replace all false to true
+            $policyContent = str_replace('return false;', 'return true;', $policyContent);
+            file_put_contents($policyFilePath, $policyContent);
         }
-        return $model;
     }
 
-    public function OnAfterSave($model)
+    public function userCanViewAny()
     {
-        if (is_callable($this->OnAfterSave) && $this->OnAfterSave) {
-            return call_user_func($this->OnAfterSave, $model);
-        }
-        return $model;
+        return $this->canViewAny && is_callable($this->canViewAny) ? call_user_func($this->canViewAny) : $this->canViewAny;
     }
 
-    public function OnBeforeDelete($model)
+    public function getModel(): string
     {
-        if (is_callable($this->OnBeforeDelete) && $this->OnBeforeDelete) {
-            return call_user_func($this->OnBeforeSave, $model);
-        }
-        return $model;
+        return $this->model;
     }
 
-    public function OnAfterDelete($model)
+    public function getLabel(): string
     {
-        if (is_callable($this->OnAfterDelete) && $this->OnAfterDelete) {
-            return call_user_func($this->OnAfterDelete, $model);
-        }
-        return $model;
-    }
-
-    public function OnList($model)
-    {
-        if (is_callable($this->OnList) && $this->OnList) {
-            return call_user_func($this->OnList, $model);
-        }
-        return $model;
-    }
-
-    public function OnDetail($model)
-    {
-        if (is_callable($this->OnDetail) && $this->OnDetail) {
-            return call_user_func($this->OnDetail, $model);
-        }
-        return $model;
+        return $this->label;
     }
 
     public function getSingleLabel(): string
@@ -198,9 +119,137 @@ class Component
         return str($this->singleLabel)->lower();
     }
 
-    public function getLabel(): string
+    public function getActions(): array
     {
-        return $this->label;
+        return $this->actions;
+    }
+
+    public function getPages(): array
+    {
+        return $this->pages;
+    }
+
+    public function getCustomScript(): string
+    {
+        return $this->customScript;
+    }
+
+    public function eventOnIndexQuery($query): mixed
+    {
+        $this->eventOnQuery($query);
+        $relations = [];
+        foreach ($this->getFields() as $field) {
+            if (
+                $field->show_in_index
+                && (!$this->options->value["columns"] || in_array($field->attribute, $this->options->value["columns"],
+                        false))
+            ) {
+                if ($field instanceof Relation) {
+                    $rname = $field->relationName ?: str_replace("_id", "", $field->attribute);
+                    if (method_exists($this->model, $rname)) {
+                        $relations[] = $rname;
+                    } else {
+                        report(new Exception("Relation not found: ".$this->model.'->'.$rname));
+                    }
+                } elseif ($field instanceof BelongToMany) {
+                    $relations[] = $field->attribute;
+                }
+            }
+        }
+        if ($relations) {
+            $query->with($relations);
+        }
+
+        if ($this->OnIndexQuery && is_callable($this->OnIndexQuery)) {
+            return call_user_func($this->OnIndexQuery, $query);
+        }
+        return $query;
+    }
+
+    public function eventOnQuery($query): mixed
+    {
+        if ($this->OnQuery && is_callable($this->OnQuery)) {
+            return call_user_func($this->OnQuery, $query);
+        }
+        return $query;
+    }
+
+    public function getFields(): array
+    {
+        return $this->fields;
+    }
+
+    public function eventOnDetailQuery($query): mixed
+    {
+        $this->eventOnQuery($query);
+        if ($this->OnDetailQuery && is_callable($this->OnDetailQuery)) {
+            return call_user_func($this->OnDetailQuery, $query);
+        }
+        return $query;
+    }
+
+    public function eventOnEditQuery($query): mixed
+    {
+        $this->eventOnQuery($query);
+        if ($this->OnEditQuery && is_callable($this->OnEditQuery)) {
+            return call_user_func($this->OnEditQuery, $query);
+        }
+        return $query;
+    }
+
+    public function eventOnBeforeSave($item): mixed
+    {
+        if ($this->OnBeforeSave && is_callable($this->OnBeforeSave)) {
+            return call_user_func($this->OnBeforeSave, $item);
+        }
+        return $item;
+    }
+
+    public function eventOnAfterSave($item): mixed
+    {
+        if ($this->OnAfterSave && is_callable($this->OnAfterSave)) {
+            return call_user_func($this->OnAfterSave, $item);
+        }
+        return $item;
+    }
+
+    public function eventOnBeforeDelete($item): mixed
+    {
+        if ($this->OnBeforeDelete && is_callable($this->OnBeforeDelete)) {
+            return call_user_func($this->OnBeforeDelete, $item);
+        }
+        return $item;
+    }
+
+    public function eventOnAfterDelete($item): mixed
+    {
+        if ($this->OnAfterDelete && is_callable($this->OnAfterDelete)) {
+            return call_user_func($this->OnAfterDelete, $item);
+        }
+        return $item;
+    }
+
+    public function userCanView($item)
+    {
+        return $this->canView && is_callable($this->canView) ? call_user_func($this->canView,
+            $item) : $this->canView;
+    }
+
+    public function userCanAdd()
+    {
+        return $this->canAdd && is_callable($this->canAdd) ? call_user_func($this->canAdd) : $this->canAdd;
+    }
+
+    public function userCanEdit($item)
+    {
+        return $this->canEdit && is_callable($this->canEdit) ? call_user_func($this->canEdit,
+            $item) : $this->canEdit;
+    }
+
+    public function userCanDelete($item)
+    {
+        return $this->canDelete && is_callable($this->canDelete) ? call_user_func($this->canDelete,
+            $item) : $this->canDelete;
     }
 
     public function scripts(): string
@@ -226,50 +275,23 @@ class Component
         return implode(PHP_EOL, $result);
     }
 
-    public function getModel()
+    public function getFilteredFields(Closure $callback): array
     {
-        $relations = [];
-        foreach ($this->fields as $field) {
-            if (
-                $field->show_in_index
-                && (!$this->options->value["columns"] || in_array($field->attribute, $this->options->value["columns"], false))
-            ) {
-                if ($field instanceof Relation) {
-                    $rname = $field->relationName ?: str_replace("_id", "", $field->attribute);
-                    if (method_exists($this->model, $rname)) {
-                        $relations[] = $rname;
-                    } else {
-                        file_put_contents(app_path('related_methods.log'), PHP_EOL . $this->model . '->' . $rname, FILE_APPEND);
-                    }
-
-                } elseif ($field instanceof BelongToMany) {
-                    $relations[] = $field->attribute;
-                }
-            }
-        }
-        $m = $this->model::query();
-        if ($relations) $m->with($relations);
-        return $this->OnSearchModel($m);
+        return array_filter($this->fields, $callback);
     }
 
-    public function OnSearchModel($model)
+    public function setFields($fields): static
     {
-
-        if (is_callable($this->onSearchModel) && $this->onSearchModel) {
-            return call_user_func($this->onSearchModel, $model);
-        }
-        return $model;
+        $this->fields = $fields;
+        return $this;
     }
 
-    public function OnModel($model)
+    public function getQuery()
     {
-        if (is_callable($this->onModel) && $this->onModel) {
-            return call_user_func($this->onModel, $model);
-        }
-        return $model;
+        return $this->model::query();
     }
 
-    public function getActions($item)
+    public function getFilteredActions($item)
     {
         $actions = [];
         foreach ($this->actions as $action) {
@@ -278,6 +300,6 @@ class Component
             }
         }
         return $actions;
-    }
 
+    }
 }

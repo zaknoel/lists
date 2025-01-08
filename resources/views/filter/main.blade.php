@@ -4,7 +4,7 @@
     </div>
     <div class="dropdown-menu p-3 filter_dropdown" style="border: 1px solid #cecece" aria-labelledby="dropdownMenuButton{{$field->attribute}}"
          >
-        <form style="min-width: 200px" data-name="{{$field->attribute}}" data-type="{{$field->type}}-{{$field->componentName()}}">
+        <form style="min-width: 200px" data-name="{{$field->attribute}}" data-type="{{$field->getType()}}-{{$field->componentName()}}">
             <h6 class="mb-2">{{$field->showLabel()}}:</h6>
             {!! $field->filterContent() !!}
             <div class="text-center mt-3">

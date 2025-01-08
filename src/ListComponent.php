@@ -3,6 +3,7 @@
 namespace Zak\Lists;
 
 
+use Artisan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -11,38 +12,16 @@ use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 use Yajra\DataTables\DataTables;
-use Zak\Lists\Fields\BelongToMany;
 use Zak\Lists\Fields\Field;
 
 class ListComponent
 {
     public static function listHandler(Request $request, string $list)
     {
-        $isAjax = $request->ajax() && $request->header('X-Requested-With') === 'XMLHttpRequest';
-        $component = self::getComponent($list);
+        $isAjax = self::isAjax($request);
+        $component = self::getComponent($list, true);
         $isExcel = $request->get('excel', "N") === "Y";
-        if ($component->options->value["sort"] ?? []) {
-            $fields = [];
-            foreach ($component->options->value["sort"] as $col) {
-                $first = Arr::where($component->fields, fn($item) => $item->attribute === $col);
-                $fields[] = reset($first);
-            }
-            if (count($fields) !== count($component->fields)) {
-                foreach ($component->fields as $field) {
-                    if (!in_array($field, $fields, true)) {
-                        $fields[] = $field;
-                    }
-                }
-            }
-            $component->fields = $fields;
-        }
-
-
-        $fields = Arr::where($component->fields, static function (Field $field) use ($component) {
-            return $field->show_in_index && (!$component->options->value["columns"] || in_array($field->attribute,
-                        $component->options->value["columns"], false));
-        });
-
+        $fields = self::filterFields($component, 'show_in_index');
         $curSort = $component->options->value['curSort'] ?? ['id', "desc"];
         if ($isAjax || $isExcel) {
             if ($request->has('order')) {
@@ -66,8 +45,10 @@ class ListComponent
 
             $length = $component->options->value["length"] ?? 25;
             request()?->merge(['length' => $length]);
+            $dm = $component->getQuery();
 
-            $dm = $component->onList($component->getModel());
+            $component->eventOnIndexQuery($component->getQuery());
+
             Arr::map($fields, static function (Field $field) use ($dm) {
                 $field->generateFilter($dm);
             });
@@ -80,11 +61,11 @@ class ListComponent
             $columns = Arr::map($fields, static function ($item) {
                 return $item->attribute;
             });
-            if ($component->actions) {
+            if ($component->getActions()) {
                 $columns[] = "action";
             }
             $data->only($columns);
-            $defaultAction = Arr::first($component->actions, function (Action $action) {
+            $defaultAction = Arr::first($component->getActions(), function (Action $action) {
                 return $action->default;
             });
 
@@ -94,10 +75,9 @@ class ListComponent
                     fn($item) => $field->item($item)->showIndex($item, $list, $defaultAction));
             });
             $data->rawColumns($columns);
-            if ($component->actions) {
+            if ($component->getActions()) {
                 $data->addColumn("action", fn($item) => view('lists::actions',
-
-                    ["item" => $item, "actions" => $component->getActions($item), "list" => $list]));
+                    ["item" => $item, "actions" => $component->getFilteredActions($item), "list" => $list]));
             }
             if ($isAjax) {
                 return $data->make(true);
@@ -118,14 +98,12 @@ class ListComponent
         $index = array_search($curSort[0], array_column($fields, 'attribute'), true);
         $curSort[2] = $index;
         $filters = [];
-        $dm = $component->getModel();
-        foreach ($component->fields as $field) {
+        foreach ($component->getFields() as $field) {
             if ($field->filterable && in_array($field->attribute, $component->options->value["filters"], true)) {
-                $field->generateFilter($dm);
+                $field->generateFilter();
                 $filters[] = $field;
             }
         }
-
         return view("lists::list", [
             "length" => $length,
             "curSort" => $curSort,
@@ -136,37 +114,98 @@ class ListComponent
         ]);
     }
 
-    private static function getComponent(string $list): Component
+    public static function isAjax($request): bool
+    {
+        return $request->ajax() && $request->header('X-Requested-With') === 'XMLHttpRequest';
+    }
+
+    private static function getComponent(string $list, $is_index = false): Component
     {
         $file = (config('lists.path') ?? app_path("/Lists/")).$list.".php";
         if (!file_exists($file)) {
-            abort(404);
+            Artisan::call('zak:component', ['name' => $list]);
+            abort(404, 'Component not found: '.$list.'. Auto generated at '.$file);
         }
         $data = (include $file) ?? null;
-        if (!$data) {
-            abort(404);
+        if (!$data instanceof Component) {
+            abort(404, 'Component not configured properly: '.$list);
         }
-        return $data;
+        $component = $data;
+        if (($component->options->value["sort"] ?? []) && $is_index) {
+            $fields = [];
+            foreach ($component->options->value["sort"] as $col) {
+                $first = Arr::where($component->getFields(), fn($item) => $item->attribute === $col);
+                $fields[] = reset($first);
+            }
+            if (count($fields) !== count($component->getFields())) {
+                foreach ($component->getFields() as $field) {
+                    if (!in_array($field, $fields, true)) {
+                        $fields[] = $field;
+                    }
+                }
+            }
+            $component->setFields($fields);
+        }
+        return $component;
+    }
+
+    private static function filterFields(Component $component, string $string)
+    {
+        return Arr::where($component->getFields(), static function (Field $field) use ($component, $string) {
+            return $field->{$string} && (!$component->options->value["columns"] || in_array($field->attribute,
+                        $component->options->value["columns"], false));
+        });
+    }
+
+    private static function save($item, array $fields, Request $request, $component)
+    {
+        $rules = [];
+        $params = [];
+        $fields = Arr::map($fields, static function (Field $field) use (&$params, &$rules, $item) {
+
+            $rules = array_merge($rules, $field->getRules($item));
+            $params = array_merge($params, $field->getRuleParams());
+            return $field;
+        });
+        $data = $request->validate($rules, $params);
+        $item = $item ?? new ($component->getModel());
+        try {
+            Arr::map($fields, static function (Field $field) use ($data, $item) {
+                $field->saveValue($item, $data);
+            });
+            $component->eventOnBeforeSave($item);
+            $item->save();
+            $component->eventOnAfterSave($item);
+
+
+        } catch (Throwable $e) {
+            report("Zak.Lists.Error:".$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+            // Throw the exception
+            throw ValidationException::withMessages([
+                'custom_field' => $e->getMessage(),
+            ]);
+
+        }
+        return $item;
     }
 
     public static function detailHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
-        $item = $component->onDetail($component->getModel()->where('id', $item)->firstOrFail());
-        $fields = Arr::where($component->fields, static function (Field $field) {
-            return $field->show_in_detail;
-        });
+        $query = $component->getQuery();
+        $component->eventOnDetailQuery($query);
+        $item = $query->where('id', $item)->firstOrFail();
+        if (!$component->userCanView($item)) {
+            abort(403);
+        }
+        $fields = $component->getFilteredFields(fn(Field $item) => $item->show_in_detail);
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
-            if (array_key_exists($field->attribute, $item->getAttributes())) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            } elseif ($field instanceof BelongToMany) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            }
+            $field->item($item);
             return $field;
         });
         return view('lists::detail',
             [
-                "pages" => $component->pages,
+                "pages" => $component->getPages(),
                 'component' => $component,
                 "item" => $item,
                 "list" => $list,
@@ -176,22 +215,21 @@ class ListComponent
 
     public static function editFormHandler(Request $request, string $list, int $item)
     {
-
         $component = self::getComponent($list);
-        $item = $component->onDetail($component->getModel()->where('id', $item)->firstOrFail());
-        $fields = Arr::where($component->fields, static function (Field $field) {
+        $query = $component->getQuery();
+        $component->eventOnEditQuery($query);
+        $item = $query->where('id', $item)->firstOrFail();
+        if (!$component->userCanEdit($item)) {
+            abort(403);
+        }
+
+        $fields = Arr::where($component->getFields(), static function (Field $field) {
             return $field->show_on_update;
         });
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
-            if (array_key_exists($field->attribute, $item->getAttributes())) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            } elseif ($field instanceof BelongToMany) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            }
+            $field->item($item)->showEdit();
             return $field;
         });
-
-
         return view("lists::form",
             [
                 "item" => $item,
@@ -199,7 +237,8 @@ class ListComponent
                 "fields" => $fields,
                 "list" => $list,
                 "title" => "Редактировать ".$component->getSingleLabel(),
-                "pageTitle" => "Редактировать ".$component->getSingleLabel()
+                "pageTitle" => "Редактировать ".$component->getSingleLabel(),
+                "frame" => $request->get('frame', 0)
             ]
         );
     }
@@ -207,56 +246,20 @@ class ListComponent
     public static function editSaveHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
-        $item = $component->onDetail($component->getModel()->where('id', $item)->firstOrFail());
-        $rules = [];
-        $params = [];
-        $fields = Arr::where($component->fields, static function (Field $field) {
-            return $field->show_on_update;
-        });
-        $fields = Arr::map($fields, static function (Field $field) use (&$params, &$rules, $item) {
-
-            $rules = array_merge($rules, $field->getRules($item));
-            $params = array_merge($params, $field->getRuleParams());
-            if (array_key_exists($field->attribute, $item->getAttributes())) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            } elseif ($field instanceof BelongToMany) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            }
-            return $field;
-
-        });
-        $data = $request->validate($rules, $params);
-        $delete = $request->get('delete') ?? [];
-        try {
-            Arr::map($fields, static function (Field $field) use ($data, $delete, $item) {
-                if ($field->show_on_update && !$field->virtual && array_key_exists($field->attribute, $data)) {
-                    $value = is_array($data[$field->attribute])
-
-                        ? $field->arrayValue(Arr::map($data[$field->attribute],
-                            static fn($_item) => $field->beforeSave($_item)))
-
-                        : $field->beforeSave($data[$field->attribute]);
-
-                    $field->saveValue($item, $value);
-
-                } elseif (array_key_exists($field->attribute, $delete)) {
-                    $field->beforeSave("");
-                    $field->saveValue($item, "");
-                }
-            });
-
-            $component->onBeforeSave($item);
-            $item->save();
-            $component->onAfterSave($item);
-        } catch (Throwable $e) {
-            report("Zak.Lists.Error:".$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
-            // Throw the exception
-            throw ValidationException::withMessages([
-                'custom_field' => $e->getMessage(),
-            ]);
-
+        $query = $component->getQuery();
+        $component->eventOnEditQuery($query);
+        $item = $query->where('id', $item)->firstOrFail();
+        if (!$component->userCanEdit($item)) {
+            abort(403);
         }
 
+        $fields = Arr::where($component->getFields(), static function (Field $field) {
+            return $field->show_on_update;
+        });
+        $item = self::save($item, $fields, $request, $component);
+        if ($request->get('frame', 0)) {
+            return view('lists::success', ["item" => $item]);
+        }
         return Redirect::route('lists_detail', ["list" => $list, "item" => $item])->with('js_success',
             "Успешно обновлено!");
     }
@@ -264,24 +267,21 @@ class ListComponent
     public static function addFormHandler(Request $request, string $list)
     {
         $component = self::getComponent($list);
-        $item = $component->onModel(new $component->model);
+
+        $item = new ($component->getModel());
         if ($request->has('copy_from')) {
-            $copy = $component->getModel()->where('id', $request->get('copy_from'))->first();
+            $copy = $component->getQuery()->where('id', $request->get('copy_from'))->first();
             if ($copy) {
                 $item = $copy;
                 unset($item->id);
             }
         }
 
-        $fields = Arr::where($component->fields, static function (Field $field) {
+        $fields = Arr::where($component->getFields(), static function (Field $field) {
             return $field->show_on_add;
         });
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
-            if (array_key_exists($field->attribute, $item->getAttributes())) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            } elseif ($field instanceof BelongToMany) {
-                $field->item($item)->fillValue($item->{$field->attribute});
-            }
+            $field->item($item)->showEdit();
             return $field;
         });
 
@@ -292,65 +292,42 @@ class ListComponent
                 "fields" => $fields,
                 "list" => $list,
                 "title" => "Добавить новый ".$component->getSingleLabel(),
-                "pageTitle" => "Новый ".$component->getSingleLabel()
+                "pageTitle" => "Новый ".$component->getSingleLabel(),
+                "frame" => $request->get('frame', 0)
             ]
         );
     }
 
     public static function addSaveHandler(Request $request, string $list)
     {
+
         $component = self::getComponent($list);
-        $item = $component->onModel(new $component->model);
-        $rules = [];
-        $params = [];
-        Arr::map($component->fields, static function (Field $field) use (&$params, &$rules) {
-            if ($field->show_on_add) {
-                $rules = array_merge($rules, $field->getRules());
-                $params = array_merge($params, $field->getRuleParams());
-            }
-        });
-        //dd($request->all(), $rules);
-        $data = $request->validate($rules, $params);
-        try {
-
-
-            Arr::map($component->fields, static function (Field $field) use ($data, $item) {
-                if ($field->show_on_add && !$field->virtual && array_key_exists($field->attribute, $data)) {
-                    $value = is_array($data[$field->attribute])
-
-                        ? $field->arrayValue(Arr::map($data[$field->attribute],
-                            static fn($item) => $field->beforeSave($item)))
-
-                        : $field->beforeSave($data[$field->attribute]);
-
-                    $field->saveValue($item, $value);
-                }
-            });
-            $component->onBeforeSave($item);
-            $item->save();
-            $component->onAfterSave($item);
-        } catch (Throwable $e) {
-            if ($item->id) {
-                $item->delete();
-            }
-            //dd($e);
-            // Throw the exception
-            throw ValidationException::withMessages([
-                'custom_field' => $e->getMessage(),
-            ]);
+        if (!$component->userCanAdd()) {
+            abort(403);
         }
 
+        $fields = Arr::where($component->getFields(), static function (Field $field) {
+            return $field->show_on_add;
+        });
+        $item = self::save(null, $fields, $request, $component);
+        if ($request->get('frame', 0)) {
+            return view('lists::success', ["item" => $item]);
+        }
         return Redirect::route('lists', $list)->with('js_success', "Успешно добавлен");
     }
 
     public static function deleteHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
-        $item = $component->getModel()->where('id', $item)->firstOrFail();
+        $item = $component->getQuery()->where('id', $item)->firstOrFail();
         /**@var Model $item */
-        $component->OnBeforeDelete($item);
+        if (!$component->userCanDelete($item)) {
+            abort(403);
+        }
+
+        $component->eventOnBeforeDelete($item);
         $item->deleteOrFail();
-        $component->OnAfterDelete($item);
+        $component->eventOnAfterDelete($item);
         return Redirect::route('lists', $list)->with('js_success', "Элемент удалена успешно !");
     }
 
@@ -374,13 +351,18 @@ class ListComponent
     public static function pagesHandler(Request $request, string $list, int $item, string $page)
     {
         $component = self::getComponent($list);
-        $item = $component->onDetail($component->model::findOrFail($item));
-        $curPage = $component->pages[$page];
+        $query = $component->getQuery();
+        $component->eventOnDetailQuery($query);
+        $item = $query->where('id', $item)->firstOrFail();
+        if (!$component->userCanView($item)) {
+            abort(403);
+        }
+        $curPage = $component->getPages()[$page] ?? null;
         if (!$curPage) {
             abort(404);
         }
         if (is_callable($curPage["view"])) {
-            $view = call_user_func_array($curPage["view"], [$item]);
+            $view = call_user_func($curPage["view"], $item);
         } else {
             $view = "";
         }
@@ -389,7 +371,7 @@ class ListComponent
             [
                 'component' => $component,
                 "view" => $view,
-                "pages" => $component->pages,
+                "pages" => $component->getPages(),
                 "item" => $item,
                 "list" => $list,
                 "fields" => [],

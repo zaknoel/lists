@@ -34,14 +34,14 @@ return Component::init([
             ->sortable()->filterable()->hideOnForms()
             ->displayInList(function ($item) {
                 if ($item->status_id) {
-                    return "<span class='badge text-bg-" . $item->status->code . "'>" . $item->status->name . "</span>";
+                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name."</span>";
                 } else {
                     return "<span class='badge text-bg-warning'>Без статуса</span>";
                 }
             })
             ->displayInDetail(function ($item) {
                 if ($item->status_id) {
-                    return "<span class='badge text-bg-" . $item->status->code . "'>" . $item->status->name . "</span>";
+                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name."</span>";
                 } else {
                     return "<span class='badge text-bg-warning'>Без статуса</span>";
                 }
@@ -82,14 +82,16 @@ return Component::init([
         return $model;
     },
     'onModel' => function ($model) {
-        if (isMedPred()) $model->user_id = auth()->user()->id;
+        if (isMedPred()) {
+            $model->user_id = auth()->user()->id;
+        }
         return $model;
     },
     "OnBeforeSave" => static function (Visit $item) {
         if ($item->is_doctor) {
-            $item->name = "Визит к врачу " . ($item->doctor_id ? $item->doctor->name : '');
+            $item->name = "Визит к врачу ".($item->doctor_id ? $item->doctor->name : '');
         } else {
-            $item->name = "Визит к аптеку " . ($item->company_id ? $item->company->name : '');
+            $item->name = "Визит к аптеку ".($item->company_id ? $item->company->name : '');
         }
         if (!$item->status_id) {
             $item->status_id = Visit::STATUS_NEW;
@@ -98,20 +100,20 @@ return Component::init([
 
     },
     'OnAfterSave' => function (Visit $item) {
-        $gr=auth()->user()?->category_id;
-        $uid=auth()->user()?->id;
-        $uG=false;
-        if($gr===Category::OTC){
-            $uG='ots_user_id';
-        }elseif($gr===Category::RX){
-            $uG='rx_user_id';
-        }elseif ($gr===Category::DERMA){
-            $uG='dermo_user_id';
+        $gr = auth()->user()?->category_id;
+        $uid = auth()->user()?->id;
+        $uG = false;
+        if ($gr === Category::OTC) {
+            $uG = 'ots_user_id';
+        } elseif ($gr === Category::RX) {
+            $uG = 'rx_user_id';
+        } elseif ($gr === Category::DERMA) {
+            $uG = 'dermo_user_id';
         }
-        if($uG){
-            $obj=$item->is_doctor?$item->doctor:$item->company;
-            if((int)$obj->{$uG}!==(int)$uid){
-                $obj->{$uG}=$uid;
+        if ($uG) {
+            $obj = $item->is_doctor ? $item->doctor : $item->company;
+            if ((int) $obj->{$uG} !== (int) $uid) {
+                $obj->{$uG} = $uid;
                 $obj->save();
             }
         }
@@ -131,17 +133,17 @@ return Component::init([
                 }
 
                 if ($newItem->is_doctor) {
-                    $newItem->name = "Визит к врачу " . ($newItem->doctor_id ? $newItem->doctor->name : '');
+                    $newItem->name = "Визит к врачу ".($newItem->doctor_id ? $newItem->doctor->name : '');
                 } else {
-                    $newItem->name = "Визит к аптеку " . ($newItem->company_id ? $newItem->company->name : '');
+                    $newItem->name = "Визит к аптеку ".($newItem->company_id ? $newItem->company->name : '');
                 }
                 $newItem->script_id = $sub_items["script"][$k];
                 $newItem->push();
                 $newItem->products()->sync($item->products->pluck('id')->toArray());
-                if($uG){
-                    $obj=$newItem->is_doctor?$newItem->doctor:$newItem->company;
-                    if((int)$obj->{$uG}!==(int)$uid){
-                        $obj->{$uG}=$uid;
+                if ($uG) {
+                    $obj = $newItem->is_doctor ? $newItem->doctor : $newItem->company;
+                    if ((int) $obj->{$uG} !== (int) $uid) {
+                        $obj->{$uG} = $uid;
                         $obj->save();
                     }
                 }
@@ -182,8 +184,8 @@ return Component::init([
                         $ans[$v->question_id] = $v;
                     }
                     //Факт закупа предедущие 2 месяца
-                    $from = date('01.m.Y', strtotime($result->created_at->format('d.m.Y') . " - 2 month"));
-                    $to = date('t.m.Y', strtotime($result->created_at->format('d.m.Y') . " - 1 month"));
+                    $from = date('01.m.Y', strtotime($result->created_at->format('d.m.Y')." - 2 month"));
+                    $to = date('t.m.Y', strtotime($result->created_at->format('d.m.Y')." - 1 month"));
 
                     $data = Sale::where('company_id', $item->company_id)
                         ->where('date', ">=", Carbon::make($from))
@@ -199,11 +201,11 @@ return Component::init([
                     if ($res):
                         $prevInfo['fact_title'] = '📊  Факт закупа за предыдущие 2 месяца:';
                         foreach ($res as $k => $v) {
-                            $prevInfo['fact'][] = '➖ ' . $k . PHP_EOL;
+                            $prevInfo['fact'][] = '➖ '.$k.PHP_EOL;
                             foreach ($v as $m => $r1) {
-                                $prevInfo['fact'][] = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-italic">' . $months[$m] . ' - ' . btf($r1) . ' шт.</span>' . PHP_EOL;
+                                $prevInfo['fact'][] = '&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="font-italic">'.$months[$m].' - '.btf($r1).' шт.</span>'.PHP_EOL;
                             }
-                            $prevInfo['fact'][] = '------------------------------------' . PHP_EOL;
+                            $prevInfo['fact'][] = '------------------------------------'.PHP_EOL;
                         }
                     endif;
 
@@ -236,7 +238,7 @@ return Component::init([
                 }
                 const date=$('#inputFordate').val();
                 if(!date) return alert('Сначала выберите дату!');
-                const user=$('#inputForuser_id').length?$('#inputForuser_id').val():" . auth()->user()->id . "
+                const user=$('#inputForuser_id').length?$('#inputForuser_id').val():".auth()->user()->id."
                 if(!user) return alert('Сначала выберите мед. преда!');
                 const products=$('#inputForproducts').val();
                 if(!products) return alert('Сначала выберите товары!');

@@ -2,7 +2,6 @@
 
 namespace Zak\Lists;
 
-use Closure;
 use Laravel\Nova\Makeable;
 
 class Action
@@ -14,7 +13,7 @@ class Action
     public string $action = "show";
     public bool $blank = false;
     public bool $default = false;
-    public Closure|null $show = null;
+    public mixed $show = null;
 
     public function __construct(string $name)
     {
@@ -35,6 +34,16 @@ class Action
 
     public function isShown($component, $item)
     {
+        if ($this->show === null) {
+            switch ($this->action) {
+                case "show":
+                    return $component->userCanView($item);
+                case "edit":
+                    return $component->userCanEdit($item);
+                case "delete":
+                    return $component->userCanDelete($item);
+            }
+        }
         return is_callable($this->show) ? call_user_func($this->show, $component, $item) : true;
     }
 
@@ -80,24 +89,27 @@ class Action
     {
         $name = $name ?: $this->name;
         if ($this->action === "show") {
-            return '<a class="' . $class . '" href="' . route("lists_detail", ["list" => $list, "item" => $item]) . '">' . $name . '</a>';
+            return '<a class="'.$class.'" href="'.route("lists_detail",
+                    ["list" => $list, "item" => $item]).'">'.$name.'</a>';
         }
 
         if ($this->action === "edit") {
-            return '<a class="' . $class . '" href="' . route("lists_edit", ["list" => $list, "item" => $item]) . '">' . $name . '</a>';
+            return '<a class="'.$class.'" href="'.route("lists_edit",
+                    ["list" => $list, "item" => $item]).'">'.$name.'</a>';
         }
         if ($this->action === "delete") {
             return ' <form onsubmit="return confirm(\'Вы уверены, что хотите удалить этот элемент?\')" method="post"
-                      action="' . route("lists_delete", ["list" => $list, "item" => $item]) . '">
-        <input type="hidden" name="_token" value=" ' . csrf_token() . '" />
-                    <a class="dropdown-item" onclick="$(this).parent().submit()">' . $name . '</a>
+                      action="'.route("lists_delete", ["list" => $list, "item" => $item]).'">
+        <input type="hidden" name="_token" value=" '.csrf_token().'" />
+                    <a class="dropdown-item" onclick="$(this).parent().submit()">'.$name.'</a>
                 </form>';
         }
         if ($this->type === 'link') {
-            return '<a class="' . $class . '" href="' . $this->action . '">' . $name . '</a>';
+            return '<a class="'.$class.'" href="'.$this->action.'">'.$name.'</a>';
         }
         if ($this->type === 'js') {
-            return '<a class="' . $class . '" href="javascript:void(0)" onclick="' . str_replace('item_id', $item->id, $this->action) . '">' . $name . '</a>';
+            return '<a class="'.$class.'" href="javascript:void(0)" onclick="'.str_replace('item_id', $item->id,
+                    $this->action).'">'.$name.'</a>';
         }
         return $name;
     }

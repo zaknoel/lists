@@ -2,56 +2,122 @@
 
 namespace Zak\Lists\Fields;
 
-use Closure;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Laravel\Nova\Makeable;
+use Zak\Lists\Fields\Traits\FieldEvents;
+use Zak\Lists\Fields\Traits\FieldFilter;
+use Zak\Lists\Fields\Traits\FieldProperty;
 
 abstract class Field
 {
     use Makeable;
+    use FieldEvents, FieldProperty, FieldFilter;
 
     public string $name;
-    public string $type;
-    public string $component_name;
-
     public string $attribute;
-
     public $value;
-    public $filter_value = null;
-
-    public bool $sortable = false;
-    public bool $defaultAction = false;
-
-    public bool $filterable = true;
-    public bool $searchable = true;
-
-    public bool $show_in_index = true;
-    public bool $show_in_detail = true;
-    public bool $show_on_update = true;
-    public bool $show_on_add = true;
-
-    public bool $virtual = false;
-
-    public bool $required = false;
-    public bool $multiple = false;
-    public int $width = 6;
-
-    public Closure|null $listDisplayCallback = null;
-    public Closure|null $detailDisplayCallback = null;
-    public Closure|null $beforeSaveCallback = null;
-    public Closure|null $beforeFillCallback = null;
-    public array $rules = [];
-    public mixed $default = "";
-    public string $jsOptions = "";
-
-    public Model|null $item = null;
+    protected string $type;
+    protected string $component_name;
 
     public function __construct($name, $attribute = null)
     {
         $this->attribute = $attribute ?? str_replace(' ', '_', Str::lower($name));
         $this->name = $name;
+    }
+
+    public static function create(
+        $name,
+        $attribute = null,
+        $required = false,
+        $sortable = false,
+        $filterable = false,
+        $searchable = false,
+        $multiple = false,
+        $virtual = false,
+        $show_in_index = true,
+        $show_in_detail = true,
+        $show_on_update = true,
+        $show_on_add = true,
+        $width = 6,
+        $default = null,
+        $view = null,
+        $filter_view = null,
+        $defaultAction = false,
+        $rules = [],
+        $onBeforeFilter = null,
+        $onSaveForm = null,
+        $onFillForm = null,
+        $onShowDetail = null,
+        $onShowList = null
+    ): static {
+        $instance = new static($name, $attribute);
+        if ($required) {
+            $instance->required();
+        }
+        if ($sortable) {
+            $instance->sortable();
+        }
+        if ($filterable) {
+            $instance->filterable();
+        }
+        if ($searchable) {
+            $instance->searchable();
+        }
+        if ($multiple) {
+            $instance->multiple();
+        }
+        if ($virtual) {
+            $instance->virtual();
+        }
+        if ($show_in_index) {
+            $instance->showOnIndex();
+        }
+        if ($show_in_detail) {
+            $instance->showOnDetail();
+        }
+        if ($show_on_update) {
+            $instance->showOnUpdate();
+        }
+        if ($show_on_add) {
+            $instance->showOnAdd();
+        }
+        if ($width) {
+            $instance->width($width);
+        }
+        if ($default) {
+            $instance->default($default);
+        }
+        if ($view) {
+            $instance->view($view);
+        }
+        if ($filter_view) {
+            $instance->filterView($filter_view);
+        }
+        if ($defaultAction) {
+            $instance->defaultAction();
+        }
+        if ($rules) {
+            foreach ($rules as $rule => $message) {
+                $instance->addRule($rule, $message);
+            }
+        }
+        if ($onBeforeFilter) {
+            $instance->onBeforeFilter($onBeforeFilter);
+        }
+        if ($onSaveForm) {
+            $instance->onSaveForm($onSaveForm);
+        }
+        if ($onFillForm) {
+            $instance->onFillForm($onFillForm);
+        }
+        if ($onShowDetail) {
+            $instance->onShowDetail($onShowDetail);
+        }
+        if ($onShowList) {
+            $instance->onShowList($onShowList);
+        }
+        return $instance;
     }
 
     public function addRule($rule, $message): static
@@ -60,37 +126,31 @@ abstract class Field
         return $this;
     }
 
-    public function item($item)
-    {
-        $this->item = $item;
-        return $this;
-    }
-
-    public function default($value = ""): static
-    {
-        $this->default = $value;
-        return $this;
-    }
-
     public function getType(): string
     {
-        return $this->type;
+        return $this->type();
     }
 
-    public function width($col = 12): static
+    abstract public function type();
+
+    public function getComponentName(): string
     {
-        $this->width = $col;
-        return $this;
+        return $this->component_name;
     }
 
-    public function defaultAction(): static
+    public function showEdit(): void
     {
-        $this->defaultAction = true;
-        return $this;
+        $this->handleFill();
+        $this->eventOnFillForm();
     }
+
+    abstract public function handleFill();
 
     public function show()
     {
+        if ($this->view) {
+            return view($this->view, ["field" => $this]);
+        }
         $view = "lists::fields.".$this->componentName();
         if (!view()->exists($view)) {
             //create view
@@ -99,124 +159,11 @@ abstract class Field
                 file_put_contents($file, "<div></div>");
             }
         }
-        $this->beforeShow();
+
         return view($view, ["field" => $this]);
     }
 
     abstract public function componentName();
-
-    public function beforeShow()
-    {
-    }
-
-    public function displayInList(Closure $closure): static
-    {
-        $this->listDisplayCallback = $closure;
-        return $this;
-    }
-
-    public function displayInDetail(Closure $closure): static
-    {
-        $this->detailDisplayCallback = $closure;
-        return $this;
-    }
-
-    public function filterable(): static
-    {
-        $this->filterable = true;
-        return $this;
-    }
-
-    public function multiple(): static
-    {
-        $this->multiple = true;
-        return $this;
-    }
-
-    public function sortable(): static
-    {
-        $this->sortable = true;
-        return $this;
-    }
-
-    public function showOnIndex(): static
-    {
-        $this->show_in_index = true;
-        return $this;
-    }
-
-    public function virtual(): static
-    {
-        $this->virtual = true;
-        return $this;
-    }
-
-    public function required(): static
-    {
-        $this->required = true;
-        return $this;
-    }
-
-    public function hideOnIndex(): static
-    {
-        $this->show_in_index = false;
-        return $this;
-    }
-
-    public function showOnDetail(): static
-    {
-        $this->show_in_detail = true;
-        return $this;
-    }
-
-    public function hideOnDetail(): static
-    {
-        $this->show_in_detail = false;
-        return $this;
-    }
-
-    public function showOnUpdate(): static
-    {
-        $this->show_on_update = true;
-        return $this;
-    }
-
-    public function hideOnUpdate(): static
-    {
-        $this->show_on_update = false;
-        return $this;
-    }
-
-    public function showOnAdd(): static
-    {
-        $this->show_on_add = true;
-        return $this;
-    }
-
-    public function hideOnAdd(): static
-    {
-        $this->show_on_add = false;
-        return $this;
-    }
-
-    public function showOnForms(): static
-    {
-        $this->show_on_add = true;
-        $this->show_on_update = true;
-        return $this;
-    }
-
-    public function hideOnForms(): static
-    {
-        $this->show_on_add = false;
-        $this->show_on_update = false;
-        return $this;
-    }
-
-    public function isRequired(): bool
-    {
-        return $this->required;
-    }
 
     public function getRules($item = null): array
     {
@@ -247,7 +194,7 @@ abstract class Field
             $result[$this->attribute.".array"] = "Must be array";
         }
         if ($this->required) {
-            $result[$this->attribute.".required"] = "Fields ".$this->showLabel().' must be filled!';
+            $result[$this->attribute.".required"] = "Поля ".$this->showLabel().' обязательно для заполнения';
         }
         foreach ($this->rules as $rule => $message) {
             if (str_contains($rule, ":")) {
@@ -263,109 +210,32 @@ abstract class Field
         return $this->name;
     }
 
-    public function beforeSave(mixed $attribute)
+    public function saveValue($item, $data): void
     {
-        if ($this->beforeSaveCallback && is_callable($this->beforeSaveCallback)) {
-            $attribute = call_user_func_array($this->beforeSaveCallback, $attribute);
-        }
-        return $attribute;
+        $this->saveHandler($item, $data);
+        $this->eventOnSaveForm($item, $data);
     }
 
-    public function fillValue($value): void
-    {
+    abstract public function saveHandler($item, $data);
 
-        if ($this->beforeFillCallback && is_callable($this->beforeFillCallback)) {
-            $value = call_user_func_array($this->beforeSaveCallback, $value);
-        }
-        $this->value = $this->changeValue($value);
+    public function showDetail()
+    {
+        $this->detailHandler();
+        $this->eventOnShowDetail();
+        return $this->value;
     }
 
-    public function changeValue(mixed $value)
-    {
-        return $value;
-    }
-
-    public function showDetail($item)
-    {
-        $value = "";
-        if (array_key_exists($this->attribute, $item->getAttributes())) {
-            $value = $item->{$this->attribute};
-        }
-        if ($this->detailDisplayCallback && is_callable($this->detailDisplayCallback)) {
-            return call_user_func($this->detailDisplayCallback, $item);
-        }
-        return $this->changeDetailValue($value);
-    }
-
-    public function changeDetailValue(mixed $value)
-    {
-        return $value;
-    }
+    abstract function detailHandler();
 
     public function showIndex($item, $list, $action = null)
     {
-        $value = "";
-        if (array_key_exists($this->attribute, $item->getAttributes())) {
-            $value = $item->{$this->attribute};
-        }
-        if ($this->listDisplayCallback && is_callable($this->listDisplayCallback)) {
-            return call_user_func($this->listDisplayCallback, $item);
-        }
+        $this->indexHandler();
+        $this->eventOnShowList();
         if ($action && $this->defaultAction) {
-            return $action->getLink($item, $list, $this->changeListValue($value));
+            return $action->getLink($item, $list, $this->value);
         }
-        return $this->changeListValue($value);
+        return $this->value;
     }
 
-    public function changeListValue(mixed $value)
-    {
-        return $value;
-    }
-
-    public function saveValue($item, $value)
-    {
-        return $item->{$this->attribute} = $value;
-    }
-
-    public function arrayValue($array)
-    {
-        return implode("|", $array);
-    }
-
-    public function showFilter()
-    {
-        return view('lists::filter.main', ['field' => $this]);
-    }
-
-    public function filteredValue()
-    {
-        return "все";
-    }
-
-    public function filterContent()
-    {
-
-        $view = "lists::filter.".$this->componentName();
-
-        if (!view()->exists($view)) {
-            //create view
-            $file = resource_path("views/vendor/lists/filter/".$this->componentName().".blade.php");
-            if (!file_exists($file)) {
-                file_put_contents($file, "<div></div>");
-            }
-        }
-        $this->beforeFilter();
-        return view($view, ["field" => $this]);
-    }
-
-    public function beforeFilter()
-    {
-
-    }
-
-    public function generateFilter($query)
-    {
-        return $query;
-    }
-
+    abstract public function indexHandler();
 }

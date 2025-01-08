@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Zak\Component;
+namespace Zak\Lists;
 
 use Maatwebsite\Excel\Concerns\FromCollection;
 

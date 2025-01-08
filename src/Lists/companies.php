@@ -71,11 +71,10 @@ return Component::init([
         Number::make("Сортировка", "sort")->sortable()->default(500),
 
 
-
     ],
     "onSearchModel" => function ($model) {
         if (isMedPred()) {
-            return  $model->where(function ($query) {
+            return $model->where(function ($query) {
                 return $query->where('rx_user_id', auth()->user()->id)
                     ->orWhere('ots_user_id', auth()->user()->id)
                     ->orWhere('dermo_user_id', auth()->user()->id);

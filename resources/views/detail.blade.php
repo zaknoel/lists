@@ -4,13 +4,13 @@
 @section("page-title", $item->name??"")
 @section("buttons")
     <a class="btn btn-info" href="{{route("lists", $list)}}"> <i class="fa fa-arrow-circle-left me-2"></i>Назад к списку</a>
-    @if($component->canEdit($item))
+    @if($component->userCanEdit($item))
         <a href="{{route("lists_edit", ["list"=>$list, "item"=>$item->id])}}" class="btn btn-primary">
             <i class="ti ti-edit fs-5"></i>
             Редактировать
         </a>
     @endif
-    @if($component->canDelete($item))
+    @if($component->userCanDelete($item))
         <form method="post" class="d-inline" action="{{route("lists_delete", ["list"=>$list, "item"=>$item->id])}}">
             @csrf
             <button onclick="return confirm('Вы уверены, что хотите удалить этот элемент?')" class="btn btn-danger">
@@ -56,8 +56,7 @@
                                     :</label>
                                 <div class="col-md-9">
                                     <p class="form-control-static">
-                                        @php($val=$field->showDetail($item))
-                                        {!! is_array($val)?implode(",", $val):$val !!}
+                                        {!! $field->showDetail($item) !!}
                                     </p>
                                 </div>
                             </div>

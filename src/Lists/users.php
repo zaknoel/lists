@@ -30,7 +30,7 @@ return Component::init([
         ID::make("ID", 'id')->hideOnForms()->sortable()->filterable()->showOnIndex(),
         Text::make("Ф.И.О", "name")->sortable()->defaultAction(),
         Email::make("Email", "email")->sortable()->required()
-        ->addRule('unique:users', "Мед. Пред. с таким email уже существует!")
+            ->addRule('unique:users', "Мед. Пред. с таким email уже существует!")
         ,
         \App\Zak\Component\Fields\Password::make('Пароль', 'password')->hideOnAdd(),
         \App\Zak\Component\Fields\Password::make('Пароль', 'password')->required()->hideOnUpdate(),
@@ -59,12 +59,12 @@ return Component::init([
 
 
     ],
-    "OnList"=>function($model){
+    "OnList" => function ($model) {
         return $model->operator();
     },
-    "OnBeforeSave"=>function($model){
-        if(!$model->password){
-            $model->password=Hash::make($model->password);
+    "OnBeforeSave" => function ($model) {
+        if (!$model->password) {
+            $model->password = Hash::make($model->password);
         }
         $model->assignRole("operator");
     }

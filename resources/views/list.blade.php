@@ -2,7 +2,7 @@
 @section("title", $component->getLabel())
 @section("page-title", $component->getLabel())
 @section("buttons")
-    @if($component->canAdd())
+    @if($component->userCanAdd())
         <a class="btn btn-info" href="{{route("lists_add", $list)}}">
             <i class="fa fa-plus me-2"></i>Добавить
             новый {{$component->getSingleLabel()}}
@@ -32,6 +32,9 @@
                             {!! $filter->showFilter()!!}
                         @endforeach
                     </div>
+                    <div class="text-end mt-3">
+                        <a class="text-warning fs-2" href="{{route('lists', $list)}}"><i class="ti ti-reset"></i> Сбросить фильтр</a>
+                    </div>
                 </div>
             </div>
         @endif
@@ -47,7 +50,7 @@
                         <thead>
                         <!-- start row -->
                         <tr>
-                            @if($component->actions)
+                            @if($component->getActions())
                                 <th>
                                     <a href="javascript:void(0)"
                                        data-bs-toggle="modal"
@@ -99,7 +102,7 @@
                 <div class="modal-body">
                     <h6 class="mb-3">Показать колонки</h6>
                     <div class="row">
-                        @foreach($component->fields as $field)
+                        @foreach($component->getFields() as $field)
                             @if($field->show_in_index)
                                 <div class="col-lg-4 mb-3">
                                     <div class="form-check form-check-inline">
@@ -119,7 +122,7 @@
                     </div>
                     <h6 class="mb-3">Показать фильтры</h6>
                     <div class="row" id="filters">
-                        @foreach($component->fields as $field)
+                        @foreach($component->getFields() as $field)
                             @if($field->show_in_index && $field->filterable)
                                 <div class="col-lg-4 mb-3">
                                     <div class="form-check form-check-inline">
@@ -139,7 +142,7 @@
                     </div>
                     <h6 class="mb-3 mt-3">Сортировка колонки</h6>
                     <ol class="sort list-group list-group-numbered" style="max-width: 500px;">
-                        @foreach($component->fields as $field)
+                        @foreach($component->getFields() as $field)
                             @if($field->show_in_index)
                                 <li class="list-group-item cursor-pointer" style="cursor: pointer">
                                     <input type="hidden" name="sort[]" value="{{$field->attribute}}">
@@ -238,7 +241,10 @@
                 "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 mt-3 col-md-7'p>>",
             ajax: {
                 url: document.documentURI, // Specify the correct URL for server-side processing
-                type: 'GET', // or 'POST', depending on your server-side setup
+                type: 'POST', // or 'POST', depending on your server-side setup
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
             },
             language: {
                 url: 'https://cdn.datatables.net/plug-ins/1.11.5/i18n/ru.json'
@@ -249,9 +255,9 @@
                     orderable: false // Disable sorting for the first column
                 }
             ],
-            order: [[{{$component->actions?(int)$curSort[2]+1:(int)$curSort[2]}}, '{{$curSort[1]}}']],
+            order: [[{{$component->getActions()?(int)$curSort[2]+1:(int)$curSort[2]}}, '{{$curSort[1]}}']],
             columns: [
-                    @if($component->actions)
+                    @if($component->getActions())
                 {
                     data: "action",
                     name: "action",
@@ -274,7 +280,7 @@
         });
         table.on('init.dt', function () {
             $('.dataTables_scrollBody').css('position', 'static');
-            table.draw();
+            //table.draw();
         });
         DataTable.ext.buttons.excel = {
             className: 'buttons-excel btn btn-dark mr-1',
@@ -356,10 +362,18 @@
                                 params[i] = vv.join("⚬");
                             }
                             break;
+                        case 'custom-custom':
+                            let vvvv = [];
+                            for (let j in f.value) {
+                                const v = f.value[j];
+                                if (v) vvvv.push(j+'-'+v);
+                            }
+                            params[i] = vvvv.join("⚬");
+                            break;
                         case 'id-text':
                         case 'number-text':
                         case 'date-text':
-                        case 'datetime-text':
+                        case 'datetime-local-text':
                             let vvv = [];
                             if (f['value_from']) {
                                 vvv.push('f' + f.value_from);
