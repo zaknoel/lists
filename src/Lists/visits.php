@@ -24,57 +24,54 @@ use App\Zak\Month;
 use Carbon\Carbon;
 
 return Component::init([
-    "model" => Visit::class,
-    "singleLabel" => "визит",
-    "label" => "Визиты",
-    "fields" => array_filter([
-        ID::make("ID", 'id')->hideOnForms()->sortable()->filterable()->showOnIndex(),
-        Relation::make("Статус", 'status_id')
+    'model' => Visit::class,
+    'singleLabel' => 'визит',
+    'label' => 'Визиты',
+    'fields' => array_filter([
+        ID::make('ID', 'id')->hideOnForms()->sortable()->filterable()->showOnIndex(),
+        Relation::make('Статус', 'status_id')
             ->model(Status::class)->field('name')
             ->sortable()->filterable()->hideOnForms()
             ->displayInList(function ($item) {
                 if ($item->status_id) {
-                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name."</span>";
+                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name.'</span>';
                 } else {
                     return "<span class='badge text-bg-warning'>Без статуса</span>";
                 }
             })
             ->displayInDetail(function ($item) {
                 if ($item->status_id) {
-                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name."</span>";
+                    return "<span class='badge text-bg-".$item->status->code."'>".$item->status->name.'</span>';
                 } else {
                     return "<span class='badge text-bg-warning'>Без статуса</span>";
                 }
-            })
-        ,
-        isMedPred() ? "" : Relation::make("Мед. пред.", 'user_id')
+            }),
+        isMedPred() ? '' : Relation::make('Мед. пред.', 'user_id')
             ->model(User::class)->field('name')
-            ->sortable()->filterable()->filter(["operator"])->required(),
-        Text::make("Название", "name")->sortable()->defaultAction()->hideOnForms(),
+            ->sortable()->filterable()->filter(['operator'])->required(),
+        Text::make('Название', 'name')->sortable()->defaultAction()->hideOnForms(),
         \App\Zak\Component\Fields\Date::make('Дата', 'date')->filterable()->sortable()->required(),
-        Select::make("Тип визита", 'is_doctor')->sortable()->filterable()->default([0])->width(6)
+        Select::make('Тип визита', 'is_doctor')->sortable()->filterable()->default([0])->width(6)
             ->enum([0 => 'Визит к аптеку', 1 => 'Визит к врачу']),
-        Relation::make("Врач", 'doctor_id')
+        Relation::make('Врач', 'doctor_id')
             ->model(Doctor::class)->field('name')
             ->sortable()->filterable(),
 
-        Relation::make("Контрагент", 'company_id')
+        Relation::make('Контрагент', 'company_id')
             ->model(Company::class)->field('name')
             ->sortable()->filterable(),
-        Relation::make("Скрипт", 'script_id')
+        Relation::make('Скрипт', 'script_id')
             ->model(Script::class)->field('name')
             ->sortable()->filterable()->required(),
-        BelongToMany::make("Товары", 'products')->model(Product::class)
-            ->field("name")
+        BelongToMany::make('Товары', 'products')->model(Product::class)
+            ->field('name')
             ->required()
-            ->filter(["active", "=", true])
-        ,
+            ->filter(['active', '=', true]),
 
-
-        Number::make("Сортировка", "sort")->sortable()->default(500),
+        Number::make('Сортировка', 'sort')->sortable()->default(500),
 
     ]),
-    "onSearchModel" => function ($model) {
+    'onSearchModel' => function ($model) {
         if (isMedPred()) {
             return $model->where('user_id', auth()->user()->id);
         }
@@ -85,18 +82,18 @@ return Component::init([
         if (isMedPred()) {
             $model->user_id = auth()->user()->id;
         }
+
         return $model;
     },
-    "OnBeforeSave" => static function (Visit $item) {
+    'OnBeforeSave' => static function (Visit $item) {
         if ($item->is_doctor) {
-            $item->name = "Визит к врачу ".($item->doctor_id ? $item->doctor->name : '');
+            $item->name = 'Визит к врачу '.($item->doctor_id ? $item->doctor->name : '');
         } else {
-            $item->name = "Визит к аптеку ".($item->company_id ? $item->company->name : '');
+            $item->name = 'Визит к аптеку '.($item->company_id ? $item->company->name : '');
         }
-        if (!$item->status_id) {
+        if (! $item->status_id) {
             $item->status_id = Visit::STATUS_NEW;
         }
-
 
     },
     'OnAfterSave' => function (Visit $item) {
@@ -118,11 +115,10 @@ return Component::init([
             }
         }
 
-
         if (request()?->has('sub_items')) {
             $sub_items = request()?->get('sub_items', []);
 
-            foreach ($sub_items["obj"] as $k => $v) {
+            foreach ($sub_items['obj'] as $k => $v) {
                 $newItem = $item->replicate(['id']);
                 if ($newItem->is_doctor) {
                     $newItem->doctor_id = $v;
@@ -133,11 +129,11 @@ return Component::init([
                 }
 
                 if ($newItem->is_doctor) {
-                    $newItem->name = "Визит к врачу ".($newItem->doctor_id ? $newItem->doctor->name : '');
+                    $newItem->name = 'Визит к врачу '.($newItem->doctor_id ? $newItem->doctor->name : '');
                 } else {
-                    $newItem->name = "Визит к аптеку ".($newItem->company_id ? $newItem->company->name : '');
+                    $newItem->name = 'Визит к аптеку '.($newItem->company_id ? $newItem->company->name : '');
                 }
-                $newItem->script_id = $sub_items["script"][$k];
+                $newItem->script_id = $sub_items['script'][$k];
                 $newItem->push();
                 $newItem->products()->sync($item->products->pluck('id')->toArray());
                 if ($uG) {
@@ -148,7 +144,6 @@ return Component::init([
                     }
                 }
 
-
             }
 
         }
@@ -157,23 +152,23 @@ return Component::init([
         return true;
     },
     'canEditItem' => function ($item) {
-        return $item->status_id === Status::STATUS_NEW || !$item->status_id;
+        return $item->status_id === Status::STATUS_NEW || ! $item->status_id;
     },
     'canDeleteItem' => function ($item) {
-        return $item->status_id === Status::STATUS_NEW || !$item->status_id;
+        return $item->status_id === Status::STATUS_NEW || ! $item->status_id;
     },
-    "actions" => array_filter([
-        Action::make("Просмотр")->showAction()->default(),
-        Action::make("Редактировать")->editAction()->show(function (Component $comp, $item) {
+    'actions' => array_filter([
+        Action::make('Просмотр')->showAction()->default(),
+        Action::make('Редактировать')->editAction()->show(function (Component $comp, $item) {
             return $comp->canEdit($item);
         }),
-        Action::make("Копировать")->setJsAction('CopyVisit(item_id);'),
-        Action::make("Удалить")->deleteAction()->show(function (Component $comp, $item) {
+        Action::make('Копировать')->setJsAction('CopyVisit(item_id);'),
+        Action::make('Удалить')->deleteAction()->show(function (Component $comp, $item) {
             return $comp->canDelete($item);
         }),
     ]),
     'pages' => [
-        "results" => [
+        'results' => [
             'title' => 'Результаты визита',
             'view' => static function (Visit $item) {
                 $result = VisitResult::whereVisitId($item->id)->first();
@@ -183,13 +178,13 @@ return Component::init([
                     foreach (Answer::whereVisitId($item->id)->orderBy('id')->get() as $v) {
                         $ans[$v->question_id] = $v;
                     }
-                    //Факт закупа предедущие 2 месяца
-                    $from = date('01.m.Y', strtotime($result->created_at->format('d.m.Y')." - 2 month"));
-                    $to = date('t.m.Y', strtotime($result->created_at->format('d.m.Y')." - 1 month"));
+                    // Факт закупа предедущие 2 месяца
+                    $from = date('01.m.Y', strtotime($result->created_at->format('d.m.Y').' - 2 month'));
+                    $to = date('t.m.Y', strtotime($result->created_at->format('d.m.Y').' - 1 month'));
 
                     $data = Sale::where('company_id', $item->company_id)
-                        ->where('date', ">=", Carbon::make($from))
-                        ->where('date', "<=", Carbon::make($to))
+                        ->where('date', '>=', Carbon::make($from))
+                        ->where('date', '<=', Carbon::make($to))
                         ->whereIn('product_id', $item->products ? $item->products->pluck('id')->toArray() : [])
                         ->get();
                     $res = [];
@@ -198,7 +193,7 @@ return Component::init([
                     }
                     $prevInfo = [];
                     $months = Month::array();
-                    if ($res):
+                    if ($res) {
                         $prevInfo['fact_title'] = '📊  Факт закупа за предыдущие 2 месяца:';
                         foreach ($res as $k => $v) {
                             $prevInfo['fact'][] = '➖ '.$k.PHP_EOL;
@@ -207,17 +202,16 @@ return Component::init([
                             }
                             $prevInfo['fact'][] = '------------------------------------'.PHP_EOL;
                         }
-                    endif;
+                    }
 
                     return view('pages.visit_result', compact('item', 'result', 'questions', 'prevInfo', 'ans'));
                 }
 
-
-                return view('pages.visit_result', ["item" => $item, 'result' => $result]);
-            }
-        ]
+                return view('pages.visit_result', ['item' => $item, 'result' => $result]);
+            },
+        ],
     ],
-    "customScript" => "<script>
+    'customScript' => "<script>
     $(function (){
        HandleVisitRelations();
        $('#col-is_doctor select').change(function(){
@@ -382,6 +376,6 @@ return Component::init([
     }
 
 
-</script>"
+</script>",
 
 ]);

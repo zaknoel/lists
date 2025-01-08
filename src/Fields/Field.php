@@ -11,13 +11,17 @@ use Zak\Lists\Fields\Traits\FieldProperty;
 
 abstract class Field
 {
+    use FieldEvents, FieldFilter, FieldProperty;
     use Makeable;
-    use FieldEvents, FieldProperty, FieldFilter;
 
     public string $name;
+
     public string $attribute;
+
     public $value;
+
     protected string $type;
+
     protected string $component_name;
 
     public function __construct($name, $attribute = null)
@@ -117,12 +121,14 @@ abstract class Field
         if ($onShowList) {
             $instance->onShowList($onShowList);
         }
+
         return $instance;
     }
 
     public function addRule($rule, $message): static
     {
         $this->rules[$rule] = $message;
+
         return $this;
     }
 
@@ -149,18 +155,18 @@ abstract class Field
     public function show()
     {
         if ($this->view) {
-            return view($this->view, ["field" => $this]);
+            return view($this->view, ['field' => $this]);
         }
-        $view = "lists::fields.".$this->componentName();
-        if (!view()->exists($view)) {
-            //create view
-            $file = resource_path("views/vendor/lists/fields/".$this->componentName().".blade.php");
-            if (!file_exists($file)) {
-                file_put_contents($file, "<div></div>");
+        $view = 'lists::fields.'.$this->componentName();
+        if (! view()->exists($view)) {
+            // create view
+            $file = resource_path('views/vendor/lists/fields/'.$this->componentName().'.blade.php');
+            if (! file_exists($file)) {
+                file_put_contents($file, '<div></div>');
             }
         }
 
-        return view($view, ["field" => $this]);
+        return view($view, ['field' => $this]);
     }
 
     abstract public function componentName();
@@ -169,21 +175,22 @@ abstract class Field
     {
         $result = [];
         if ($this->multiple) {
-            $result[] = "array";
+            $result[] = 'array';
         }
-        if (!$this->required) {
-            $result[] = "nullable";
+        if (! $this->required) {
+            $result[] = 'nullable';
         } else {
-            $result[] = "required";
+            $result[] = 'required';
         }
         foreach ($this->rules as $rule => $message) {
-            if ($item && str_contains($rule, "unique:")) {
-                $result[] = Rule::unique(explode(":", $rule)[1] ?? "")->ignore($item->id);
+            if ($item && str_contains($rule, 'unique:')) {
+                $result[] = Rule::unique(explode(':', $rule)[1] ?? '')->ignore($item->id);
             } else {
                 $result[] = $rule;
             }
 
         }
+
         return [$this->attribute => $result];
     }
 
@@ -191,17 +198,18 @@ abstract class Field
     {
         $result = [];
         if ($this->multiple) {
-            $result[$this->attribute.".array"] = "Must be array";
+            $result[$this->attribute.'.array'] = 'Must be array';
         }
         if ($this->required) {
-            $result[$this->attribute.".required"] = "Поля ".$this->showLabel().' обязательно для заполнения';
+            $result[$this->attribute.'.required'] = 'Поля '.$this->showLabel().' обязательно для заполнения';
         }
         foreach ($this->rules as $rule => $message) {
-            if (str_contains($rule, ":")) {
-                $rule = explode(":", $rule)[0] ?? "";
+            if (str_contains($rule, ':')) {
+                $rule = explode(':', $rule)[0] ?? '';
             }
-            $result[$this->attribute.".".$rule] = $message;
+            $result[$this->attribute.'.'.$rule] = $message;
         }
+
         return $result;
     }
 
@@ -222,10 +230,11 @@ abstract class Field
     {
         $this->detailHandler();
         $this->eventOnShowDetail();
+
         return $this->value;
     }
 
-    abstract function detailHandler();
+    abstract public function detailHandler();
 
     public function showIndex($item, $list, $action = null)
     {
@@ -234,6 +243,7 @@ abstract class Field
         if ($action && $this->defaultAction) {
             return $action->getLink($item, $list, $this->value);
         }
+
         return $this->value;
     }
 

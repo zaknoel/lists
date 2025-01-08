@@ -31,9 +31,9 @@ class ListsServiceProvider extends PackageServiceProvider
                     ->publishConfigFile()
                     ->publishAssets()
                     ->publishMigrations();
-                //->copyAndRegisterServiceProviderInApp();
+                // ->copyAndRegisterServiceProviderInApp();
             });
-        //->hasMigration('create_lists_table')
-        //->hasCommand(ListsCommand::class);
+        // ->hasMigration('create_lists_table')
+        // ->hasCommand(ListsCommand::class);
     }
 }

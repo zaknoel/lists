@@ -8,7 +8,7 @@ class ID extends Text
 
     public function componentName(): string
     {
-        return "text";
+        return 'text';
     }
 
     public function type()
@@ -26,7 +26,7 @@ class ID extends Text
         return $item;
     }
 
-    function detailHandler()
+    public function detailHandler()
     {
         $this->value = $this->item->{$this->attribute};
     }

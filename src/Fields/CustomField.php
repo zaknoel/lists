@@ -4,22 +4,23 @@ namespace Zak\Lists\Fields;
 
 class CustomField extends Field
 {
+    public string $filtered_value = '';
 
-    public string $filtered_value = "";
     public function componentName(): string
     {
-        return "custom";
+        return 'custom';
     }
-
 
     public function type()
     {
-        return "custom";
+        return 'custom';
     }
+
     public function filteredValue()
     {
         return $this->filtered_value;
     }
+
     public function handleFill()
     {
         // TODO: Implement handleFill() method.
@@ -30,7 +31,7 @@ class CustomField extends Field
         // TODO: Implement saveHandler() method.
     }
 
-    function detailHandler()
+    public function detailHandler()
     {
         // TODO: Implement detailHandler() method.
     }
@@ -44,6 +45,4 @@ class CustomField extends Field
     {
         $this->eventBeforeFilter($query);
     }
-
-
 }

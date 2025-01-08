@@ -15,7 +15,9 @@ use Zak\Lists\Models\UserOption;
 class Component
 {
     public UserOption $options;
-    public string $grid_id = "";
+
+    public string $grid_id = '';
+
     private string $className;
 
     public function __construct(
@@ -25,7 +27,7 @@ class Component
         protected array $fields = [],
         protected ?array $actions = null,
         protected ?array $pages = null,
-        protected string $customScript = "",
+        protected string $customScript = '',
 
         protected ?Closure $OnQuery = null,
         protected ?Closure $OnIndexQuery = null,
@@ -42,44 +44,44 @@ class Component
         protected ?Closure $canEdit = null,
         protected ?Closure $canDelete = null,
     ) {
-        //init component
+        // init component
         $this->className = class_basename($this->model);
         $user = auth()->user();
         $this->checkPolice();
-        $this->canAdd = $this->canAdd ?? fn() => $user->can("add", $this->model);
-        $this->canEdit = $this->canEdit ?? static fn($item) => $user->can("edit", $item);
-        $this->canDelete = $this->canDelete ?? static fn($item) => $user->can("delete", $item);
-        $this->canView = $this->canView ?? static fn($item) => $user->can("view", $item);
-        $this->canViewAny = $this->canViewAny ?? fn() => $user->can("viewAny", $this->model);
+        $this->canAdd = $this->canAdd ?? fn () => $user->can('add', $this->model);
+        $this->canEdit = $this->canEdit ?? static fn ($item) => $user->can('edit', $item);
+        $this->canDelete = $this->canDelete ?? static fn ($item) => $user->can('delete', $item);
+        $this->canView = $this->canView ?? static fn ($item) => $user->can('view', $item);
+        $this->canViewAny = $this->canViewAny ?? fn () => $user->can('viewAny', $this->model);
 
-        if (!$this->userCanViewAny()) {
+        if (! $this->userCanViewAny()) {
             abort(403);
         }
         if (is_null($this->actions)) {
             $this->actions = array_filter([
-                Action::make("Просмотр")->showAction()->default()->show($this->canView),
-                Action::make("Редактировать")->editAction()->show($this->canEdit),
-                Action::make("Удалить")->deleteAction()->show($this->canDelete),
+                Action::make('Просмотр')->showAction()->default()->show($this->canView),
+                Action::make('Редактировать')->editAction()->show($this->canEdit),
+                Action::make('Удалить')->deleteAction()->show($this->canDelete),
             ]);
         }
-        if (!$this->model) {
-            throw new InvalidArgumentException("Model not set!");
+        if (! $this->model) {
+            throw new InvalidArgumentException('Model not set!');
         }
         $this->grid_id = $this->model;
         $this->options = UserOption::firstOrCreate(
             [
-                "user_id" => auth()->user()->id,
-                "name" => $this->grid_id
+                'user_id' => auth()->user()->id,
+                'name' => $this->grid_id,
             ],
             [
-                "user_id" => auth()->user()->id,
-                "name" => $this->grid_id,
-                "value" => [
-                    "columns" => [],
-                    "sort" => [],
-                    "filters" => [],
-                    'cur_sort' => []
-                ]
+                'user_id' => auth()->user()->id,
+                'name' => $this->grid_id,
+                'value' => [
+                    'columns' => [],
+                    'sort' => [],
+                    'filters' => [],
+                    'cur_sort' => [],
+                ],
             ]
 
         );
@@ -88,12 +90,12 @@ class Component
 
     private function checkPolice(): void
     {
-        $path = app_path('Policies/'.$this->className."Policy.php");
-        if (!file_exists($path)) {
-            Artisan::call('make:policy', ['name' => $this->className."Policy", '-m' => $this->model]);
+        $path = app_path('Policies/'.$this->className.'Policy.php');
+        if (! file_exists($path)) {
+            Artisan::call('make:policy', ['name' => $this->className.'Policy', '-m' => $this->model]);
             $policyFilePath = app_path('Policies/'.$this->className.'Policy.php');
             $policyContent = file_get_contents($policyFilePath);
-            //replace all false to true
+            // replace all false to true
             $policyContent = str_replace('return false;', 'return true;', $policyContent);
             file_put_contents($policyFilePath, $policyContent);
         }
@@ -141,15 +143,15 @@ class Component
         foreach ($this->getFields() as $field) {
             if (
                 $field->show_in_index
-                && (!$this->options->value["columns"] || in_array($field->attribute, $this->options->value["columns"],
-                        false))
+                && (! $this->options->value['columns'] || in_array($field->attribute, $this->options->value['columns'],
+                    false))
             ) {
                 if ($field instanceof Relation) {
-                    $rname = $field->relationName ?: str_replace("_id", "", $field->attribute);
+                    $rname = $field->relationName ?: str_replace('_id', '', $field->attribute);
                     if (method_exists($this->model, $rname)) {
                         $relations[] = $rname;
                     } else {
-                        report(new Exception("Relation not found: ".$this->model.'->'.$rname));
+                        report(new Exception('Relation not found: '.$this->model.'->'.$rname));
                     }
                 } elseif ($field instanceof BelongToMany) {
                     $relations[] = $field->attribute;
@@ -163,6 +165,7 @@ class Component
         if ($this->OnIndexQuery && is_callable($this->OnIndexQuery)) {
             return call_user_func($this->OnIndexQuery, $query);
         }
+
         return $query;
     }
 
@@ -171,6 +174,7 @@ class Component
         if ($this->OnQuery && is_callable($this->OnQuery)) {
             return call_user_func($this->OnQuery, $query);
         }
+
         return $query;
     }
 
@@ -185,6 +189,7 @@ class Component
         if ($this->OnDetailQuery && is_callable($this->OnDetailQuery)) {
             return call_user_func($this->OnDetailQuery, $query);
         }
+
         return $query;
     }
 
@@ -194,6 +199,7 @@ class Component
         if ($this->OnEditQuery && is_callable($this->OnEditQuery)) {
             return call_user_func($this->OnEditQuery, $query);
         }
+
         return $query;
     }
 
@@ -202,6 +208,7 @@ class Component
         if ($this->OnBeforeSave && is_callable($this->OnBeforeSave)) {
             return call_user_func($this->OnBeforeSave, $item);
         }
+
         return $item;
     }
 
@@ -210,6 +217,7 @@ class Component
         if ($this->OnAfterSave && is_callable($this->OnAfterSave)) {
             return call_user_func($this->OnAfterSave, $item);
         }
+
         return $item;
     }
 
@@ -218,6 +226,7 @@ class Component
         if ($this->OnBeforeDelete && is_callable($this->OnBeforeDelete)) {
             return call_user_func($this->OnBeforeDelete, $item);
         }
+
         return $item;
     }
 
@@ -226,6 +235,7 @@ class Component
         if ($this->OnAfterDelete && is_callable($this->OnAfterDelete)) {
             return call_user_func($this->OnAfterDelete, $item);
         }
+
         return $item;
     }
 
@@ -255,23 +265,24 @@ class Component
     public function scripts(): string
     {
         $scripts = [
-            "location" => [
+            'location' => [
                 '    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=f583857c-aaf5-454e-943b-d94c3e908c3f"
-            type="text/javascript"></script>'
+            type="text/javascript"></script>',
             ],
             'checkbox' => [
                 '<link rel="stylesheet" href="/vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
                 '<script src="/vendor/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>',
-            ]
+            ],
         ];
 
         $result = [];
         foreach ($scripts as $k => $v) {
-            if (Arr::where($this->fields, fn(Field $item) => $item->componentName() === $k)) {
+            if (Arr::where($this->fields, fn (Field $item) => $item->componentName() === $k)) {
                 $result[] = implode(PHP_EOL, $v);
             }
         }
         $result[] = $this->customScript;
+
         return implode(PHP_EOL, $result);
     }
 
@@ -283,6 +294,7 @@ class Component
     public function setFields($fields): static
     {
         $this->fields = $fields;
+
         return $this;
     }
 
@@ -299,6 +311,7 @@ class Component
                 $actions[] = $action;
             }
         }
+
         return $actions;
 
     }

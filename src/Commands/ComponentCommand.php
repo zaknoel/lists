@@ -15,14 +15,14 @@ class ComponentCommand extends Command
     {
 
         $name = $this->argument('name');
-        $model = $this->option('model') ?? "User";
+        $model = $this->option('model') ?? 'User';
 
         // Paths for component and optional model
-        $componentPath = config("lists.path")."/".$name.".php";
+        $componentPath = config('lists.path').'/'.$name.'.php';
         $modelPath = $model ? app_path("Models/{$model}.php") : null;
 
         // Create the component file
-        if (!File::exists($componentPath)) {
+        if (! File::exists($componentPath)) {
             File::ensureDirectoryExists(dirname($componentPath));
             File::put($componentPath, "
 <?php
@@ -98,6 +98,7 @@ return new Component(
         } else {
             $this->error("Component {$name} already exists.");
         }
+
         return Command::SUCCESS;
     }
 }

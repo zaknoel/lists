@@ -8,7 +8,6 @@ class ListImport implements FromCollection
 {
     private array $all;
 
-
     public function __construct($all, $fields)
     {
         $data = [];
@@ -19,7 +18,7 @@ class ListImport implements FromCollection
             $header[] = $field->name;
         }
         $data[] = $header;
-        foreach ($all["data"] as $item) {
+        foreach ($all['data'] as $item) {
             $d = [];
             foreach ($item as $k => $v) {
                 if (in_array($k, $allowed)) {

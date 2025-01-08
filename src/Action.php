@@ -8,11 +8,16 @@ class Action
 {
     use Makeable;
 
-    public string $name = "";
-    public string $type = "action";
-    public string $action = "show";
+    public string $name = '';
+
+    public string $type = 'action';
+
+    public string $action = 'show';
+
     public bool $blank = false;
+
     public bool $default = false;
+
     public mixed $show = null;
 
     public function __construct(string $name)
@@ -22,13 +27,15 @@ class Action
 
     public function editAction(): static
     {
-        $this->action = "edit";
+        $this->action = 'edit';
+
         return $this;
     }
 
     public function show($func): static
     {
         $this->show = $func;
+
         return $this;
     }
 
@@ -36,70 +43,77 @@ class Action
     {
         if ($this->show === null) {
             switch ($this->action) {
-                case "show":
+                case 'show':
                     return $component->userCanView($item);
-                case "edit":
+                case 'edit':
                     return $component->userCanEdit($item);
-                case "delete":
+                case 'delete':
                     return $component->userCanDelete($item);
             }
         }
+
         return is_callable($this->show) ? call_user_func($this->show, $component, $item) : true;
     }
 
     public function default(): static
     {
         $this->default = true;
+
         return $this;
     }
 
     public function blank(): static
     {
         $this->blank = true;
+
         return $this;
     }
 
     public function deleteAction(): static
     {
-        $this->action = "delete";
+        $this->action = 'delete';
+
         return $this;
     }
 
     public function showAction(): static
     {
-        $this->action = "show";
+        $this->action = 'show';
+
         return $this;
     }
 
     public function setLinkAction($link): static
     {
-        $this->type = "link";
+        $this->type = 'link';
         $this->action = $link;
+
         return $this;
     }
 
     public function setJsAction($code): static
     {
-        $this->type = "js";
+        $this->type = 'js';
         $this->action = $code;
+
         return $this;
     }
 
-    public function getLink($item, $list, $name = "", $class = "")
+    public function getLink($item, $list, $name = '', $class = '')
     {
         $name = $name ?: $this->name;
-        if ($this->action === "show") {
-            return '<a class="'.$class.'" href="'.route("lists_detail",
-                    ["list" => $list, "item" => $item]).'">'.$name.'</a>';
+        if ($this->action === 'show') {
+            return '<a class="'.$class.'" href="'.route('lists_detail',
+                ['list' => $list, 'item' => $item]).'">'.$name.'</a>';
         }
 
-        if ($this->action === "edit") {
-            return '<a class="'.$class.'" href="'.route("lists_edit",
-                    ["list" => $list, "item" => $item]).'">'.$name.'</a>';
+        if ($this->action === 'edit') {
+            return '<a class="'.$class.'" href="'.route('lists_edit',
+                ['list' => $list, 'item' => $item]).'">'.$name.'</a>';
         }
-        if ($this->action === "delete") {
+        if ($this->action === 'delete') {
             return ' <form onsubmit="return confirm(\'Вы уверены, что хотите удалить этот элемент?\')" method="post"
-                      action="'.route("lists_delete", ["list" => $list, "item" => $item]).'">
+                      action="'.route('lists_delete', ['list' => $list, 'item' => $item]).'">
         <input type="hidden" name="_token" value=" '.csrf_token().'" />
                     <a class="dropdown-item" onclick="$(this).parent().submit()">'.$name.'</a>
                 </form>';
@@ -109,9 +123,9 @@ class Action
         }
         if ($this->type === 'js') {
             return '<a class="'.$class.'" href="javascript:void(0)" onclick="'.str_replace('item_id', $item->id,
-                    $this->action).'">'.$name.'</a>';
+                $this->action).'">'.$name.'</a>';
         }
+
         return $name;
     }
-
 }
