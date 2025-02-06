@@ -2,6 +2,8 @@
 
 namespace Zak\Lists\Fields;
 
+use Illuminate\Support\Facades\Storage;
+
 class Image extends File
 {
     public int $max_width = 100;
@@ -32,5 +34,21 @@ class Image extends File
     public function componentName(): string
     {
         return 'image';
+    }
+    public function indexHandler()
+    {
+        if ($this->item->{$this->attribute}) {
+            $this->value = "<a target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>
+                <img src='".Storage::url($this->item->{$this->attribute})."' style='max-width: 100px; max-height: 100px;'>
+</a>";
+        } else {
+            $this->value = '';
+        }
+
+    }
+
+    public function detailHandler()
+    {
+        $this->indexHandler();
     }
 }
