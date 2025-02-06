@@ -46,7 +46,7 @@ class ListComponent
             request()?->merge(['length' => $length]);
             $dm = $component->getQuery();
 
-            $component->eventOnIndexQuery($component->getQuery());
+            $component->eventOnIndexQuery($dm);
 
             Arr::map($fields, static function (Field $field) use ($dm) {
                 $field->generateFilter($dm);
