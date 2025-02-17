@@ -19,6 +19,9 @@ class ListComponent
     {
         $isAjax = self::isAjax($request);
         $component = self::getComponent($list, true);
+        if (! $component->userCanViewAny()) {
+            abort(403);
+        }
         $isExcel = $request->get('excel', 'N') === 'Y';
         $fields = self::filterFields($component, 'show_in_index');
         $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
@@ -273,6 +276,9 @@ class ListComponent
     public static function addFormHandler(Request $request, string $list)
     {
         $component = self::getComponent($list);
+        if(! $component->userCanAdd()) {
+            abort(403);
+        }
 
         $item = new ($component->getModel());
         if ($request->has('copy_from')) {
@@ -342,6 +348,7 @@ class ListComponent
 
     public static function optionHandler(Request $request, string $list)
     {
+
         $component = self::getComponent($list);
         $data = $request->validate([
             'columns' => ['array', 'nullable'],

@@ -59,9 +59,9 @@ class Component
         }
         if (is_null($this->actions)) {
             $this->actions = array_filter([
-                Action::make('Просмотр')->showAction()->default()->show($this->canView),
-                Action::make('Редактировать')->editAction()->show($this->canEdit),
-                Action::make('Удалить')->deleteAction()->show($this->canDelete),
+                Action::make('Просмотр')->showAction()->default(),
+                Action::make('Редактировать')->editAction(),
+                Action::make('Удалить')->deleteAction(),
             ]);
         }
         if (! $this->model) {
