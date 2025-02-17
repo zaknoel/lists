@@ -35,6 +35,7 @@ class Image extends File
     {
         return 'image';
     }
+
     public function indexHandler()
     {
         if ($this->item->{$this->attribute}) {
