@@ -276,7 +276,7 @@ class ListComponent
     public static function addFormHandler(Request $request, string $list)
     {
         $component = self::getComponent($list);
-        if(! $component->userCanAdd()) {
+        if (! $component->userCanAdd()) {
             abort(403);
         }
 
