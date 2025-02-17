@@ -93,7 +93,7 @@ class BelongToMany extends Select
     public function indexHandler()
     {
         if ($this->item->{$this->attribute}->count()) {
-            if ($this->list) {
+            if ($this->list && auth()->user()->can('viewAny', $this->model)) {
                 $this->value = implode(', ', $this->item->{$this->attribute}
                     ->each(function ($item) {
                         $item->{$this->field.'_new'} = "<a href='".route('lists_detail', [
