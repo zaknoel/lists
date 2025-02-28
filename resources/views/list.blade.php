@@ -8,6 +8,9 @@
             новый {{$component->getSingleLabel()}}
         </a>
     @endif
+    @if($component->customButtons)
+        {!! $component->customButtons !!}
+    @endif
 @endsection
 @section("content")
     <section class="datatables">
@@ -33,7 +36,8 @@
                         @endforeach
                     </div>
                     <div class="text-end mt-3">
-                        <a class="text-warning fs-2" href="{{route('lists', $list)}}"><i class="ti ti-reset"></i> Сбросить фильтр</a>
+                        <a class="text-warning fs-2" href="{{route('lists', $list)}}"><i class="ti ti-reset"></i>
+                            Сбросить фильтр</a>
                     </div>
                 </div>
             </div>
@@ -366,7 +370,7 @@
                             let vvvv = [];
                             for (let j in f.value) {
                                 const v = f.value[j];
-                                if (v) vvvv.push(j+'-'+v);
+                                if (v) vvvv.push(j + '-' + v);
                             }
                             params[i] = vvvv.join("⚬");
                             break;
