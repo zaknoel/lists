@@ -4,6 +4,9 @@
 @section("page-title", $item->name??"")
 @section("buttons")
     <a class="btn btn-info" href="{{route("lists", $list)}}"> <i class="fa fa-arrow-circle-left me-2"></i>Назад к списку</a>
+    @if($component->customDetailButtons)
+        {!! $component->customDetailButtons !!}
+    @endif
     @if($component->userCanEdit($item))
         <a href="{{route("lists_edit", ["list"=>$list, "item"=>$item->id])}}" class="btn btn-primary">
             <i class="ti ti-edit fs-5"></i>
