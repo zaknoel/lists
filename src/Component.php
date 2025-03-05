@@ -43,7 +43,8 @@ class Component
         protected ?Closure $canAdd = null,
         protected ?Closure $canEdit = null,
         protected ?Closure $canDelete = null,
-        public string $customButtons = ''
+        public string $customButtons = '',
+        public ?Closure $callCustomDetailButtons = null
     ) {
         // init component
         $this->className = class_basename($this->model);
