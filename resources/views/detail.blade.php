@@ -7,7 +7,7 @@
     @if(is_callable($component->callCustomDetailButtons))
         {!! $component->callCustomDetailButtons($item) !!}
     @endif
-    @if($component->userCanEdit($item))
+    @if($component->userCanEdit($item) && $component->bShowEditButtonOnDetail)
         <a href="{{route("lists_edit", ["list"=>$list, "item"=>$item->id])}}" class="btn btn-primary">
             <i class="ti ti-edit fs-5"></i>
             Редактировать

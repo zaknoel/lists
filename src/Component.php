@@ -44,7 +44,8 @@ class Component
         protected ?Closure $canEdit = null,
         protected ?Closure $canDelete = null,
         public string $customButtons = '',
-        public ?Closure $callCustomDetailButtons = null
+        public ?Closure $callCustomDetailButtons = null,
+        public bool $bShowEditButtonOnDetail = true
     ) {
         // init component
         $this->className = class_basename($this->model);
