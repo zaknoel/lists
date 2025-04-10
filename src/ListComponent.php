@@ -362,7 +362,7 @@ class ListComponent
         $component->options->value = $data;
         $component->options->save();
 
-        return Redirect::route('lists', $list)->with('js_success', 'Настройки сохранены!');
+        return back()->with('js_success', 'Настройки сохранены!');
     }
 
     public static function pagesHandler(Request $request, string $list, int $item, string $page)
