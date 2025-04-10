@@ -113,7 +113,7 @@ class Action
         }
         if ($this->action === 'delete') {
             return ' <form onsubmit="return confirm(\'Вы уверены, что хотите удалить этот элемент?\')" method="post"
-                      action="'.route('lists_delete', ['list' => $list, 'item' => $item]).'">
+                     >
         <input type="hidden" name="_token" value=" '.csrf_token().'" />
                     <a class="dropdown-item" onclick="$(this).parent().submit()">'.$name.'</a>
                 </form>';
