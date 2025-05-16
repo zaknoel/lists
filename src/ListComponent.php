@@ -214,10 +214,7 @@ class ListComponent
         if ($detail_view) {
             $view = view($detail_view,
                 [
-                    'pages' => $component->getPages(),
-                    'component' => $component,
                     'item' => $item,
-                    'list' => $list,
                     'fields' => $fields,
                 ]);
             return view('lists::detail',
