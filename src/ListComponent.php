@@ -19,7 +19,7 @@ class ListComponent
     {
         $isAjax = self::isAjax($request);
         $component = self::getComponent($list, true);
-        if (! $component->userCanViewAny()) {
+        if (!$component->userCanViewAny()) {
             abort(403);
         }
         $isExcel = $request->get('excel', 'N') === 'Y';
@@ -73,12 +73,12 @@ class ListComponent
             Arr::map($fields, static function (Field $field) use ($data, $defaultAction, $list) {
 
                 $data->editColumn($field->attribute,
-                    fn ($item) => $field->item($item)->showIndex($item, $list, $defaultAction));
+                    fn($item) => $field->item($item)->showIndex($item, $list, $defaultAction));
             });
             $data->rawColumns($columns);
             if ($component->getActions()) {
-                $view=$component->customViews['actions'] ?? 'lists::actions';
-                $data->addColumn('action', fn ($item) => view($view,
+                $view = $component->customViews['actions'] ?? 'lists::actions';
+                $data->addColumn('action', fn($item) => view($view,
                     ['item' => $item, 'actions' => $component->getFilteredActions($item), 'list' => $list]));
             }
             if ($isAjax) {
@@ -125,26 +125,26 @@ class ListComponent
     private static function getComponent(string $list, $is_index = false): Component
     {
         $file = (config('lists.path') ?? app_path('/Lists/')).$list.'.php';
-        if (! file_exists($file)) {
+        if (!file_exists($file)) {
             Artisan::call('zak:component', ['name' => $list]);
             abort(404, 'Component not found: '.$list.'. Auto generated at '.$file);
         }
         $data = (include $file) ?? null;
-        if (! $data instanceof Component) {
+        if (!$data instanceof Component) {
             abort(404, 'Component not configured properly: '.$list);
         }
         $component = $data;
         if (($component->options->value['sort'] ?? []) && $is_index) {
             $fields = [];
             foreach ($component->options->value['sort'] as $col) {
-                $first = Arr::where($component->getFields(), fn ($item) => $item->attribute === $col);
+                $first = Arr::where($component->getFields(), fn($item) => $item->attribute === $col);
                 if ($first) {
                     $fields[] = reset($first);
                 }
             }
             if (count($fields) !== count($component->getFields())) {
                 foreach ($component->getFields() as $field) {
-                    if (! in_array($field, $fields, true)) {
+                    if (!in_array($field, $fields, true)) {
                         $fields[] = $field;
                     }
                 }
@@ -158,8 +158,8 @@ class ListComponent
     private static function filterFields(Component $component, string $string)
     {
         return Arr::where($component->getFields(), static function (Field $field) use ($component, $string) {
-            return $field->{$string} && (! $component->options->value['columns'] || in_array($field->attribute,
-                $component->options->value['columns'], false));
+            return $field->{$string} && (!$component->options->value['columns'] || in_array($field->attribute,
+                        $component->options->value['columns'], false));
         });
     }
 
@@ -202,18 +202,35 @@ class ListComponent
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
-        if (! $component->userCanView($item)) {
+        if (!$component->userCanView($item)) {
             abort(403);
         }
-        $fields = $component->getFilteredFields(fn (Field $item) => $item->show_in_detail);
+        $fields = $component->getFilteredFields(fn(Field $item) => $item->show_in_detail);
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
             $field->item($item);
             return $field;
         });
-        $view=$component->customViews['detail'] ?? 'lists::detail';
-
-
-        return view($view,
+        $detail_view = $component->customViews['detail'] ?? null;
+        if ($detail_view) {
+            $view = view($detail_view,
+                [
+                    'pages' => $component->getPages(),
+                    'component' => $component,
+                    'item' => $item,
+                    'list' => $list,
+                    'fields' => $fields,
+                ]);
+            return view('lists::detail',
+                [
+                    'pages' => $component->getPages(),
+                    'component' => $component,
+                    'item' => $item,
+                    'list' => $list,
+                    'fields' => $fields,
+                    'view' => $view,
+                ]);
+        }
+        return view('lists::detail',
             [
                 'pages' => $component->getPages(),
                 'component' => $component,
@@ -229,7 +246,7 @@ class ListComponent
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
-        if (! $component->userCanEdit($item)) {
+        if (!$component->userCanEdit($item)) {
             abort(403);
         }
 
@@ -241,7 +258,7 @@ class ListComponent
 
             return $field;
         });
-        $view=$component->customViews['form'] ?? 'lists::form';
+        $view = $component->customViews['form'] ?? 'lists::form';
         return view($view,
             [
                 'item' => $item,
@@ -261,7 +278,7 @@ class ListComponent
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
-        if (! $component->userCanEdit($item)) {
+        if (!$component->userCanEdit($item)) {
             abort(403);
         }
 
@@ -270,7 +287,7 @@ class ListComponent
         });
         $item = self::save($item, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            $view=$component->customViews['success'] ?? 'lists::success';
+            $view = $component->customViews['success'] ?? 'lists::success';
             return view($view, ['item' => $item]);
         }
 
@@ -281,7 +298,7 @@ class ListComponent
     public static function addFormHandler(Request $request, string $list)
     {
         $component = self::getComponent($list);
-        if (! $component->userCanAdd()) {
+        if (!$component->userCanAdd()) {
             abort(403);
         }
 
@@ -302,7 +319,7 @@ class ListComponent
 
             return $field;
         });
-        $view=$component->customViews['form'] ?? 'lists::form';
+        $view = $component->customViews['form'] ?? 'lists::form';
         return view($view,
             [
                 'item' => $item,
@@ -320,7 +337,7 @@ class ListComponent
     {
 
         $component = self::getComponent($list);
-        if (! $component->userCanAdd()) {
+        if (!$component->userCanAdd()) {
             abort(403);
         }
 
@@ -329,7 +346,7 @@ class ListComponent
         });
         $item = self::save(null, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            $view=$component->customViews['success'] ?? 'lists::success';
+            $view = $component->customViews['success'] ?? 'lists::success';
             return view($view, ['item' => $item]);
         }
 
@@ -341,7 +358,7 @@ class ListComponent
         $component = self::getComponent($list);
         $item = $component->getQuery()->where('id', $item)->firstOrFail();
         /** @var Model $item */
-        if (! $component->userCanDelete($item)) {
+        if (!$component->userCanDelete($item)) {
             abort(403);
         }
 
@@ -377,11 +394,11 @@ class ListComponent
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
-        if (! $component->userCanView($item)) {
+        if (!$component->userCanView($item)) {
             abort(403);
         }
         $curPage = $component->getPages()[$page] ?? null;
-        if (! $curPage) {
+        if (!$curPage) {
             abort(404);
         }
         if (is_callable($curPage['view'])) {
@@ -389,8 +406,7 @@ class ListComponent
         } else {
             $view = '';
         }
-        $detail_view=$component->customViews['detail'] ?? 'lists::detail';
-        return view($detail_view,
+        return view('lists::detail',
             [
                 'component' => $component,
                 'view' => $view,
