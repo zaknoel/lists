@@ -137,7 +137,9 @@ class ListComponent
             $fields = [];
             foreach ($component->options->value['sort'] as $col) {
                 $first = Arr::where($component->getFields(), fn ($item) => $item->attribute === $col);
-                $fields[] = reset($first);
+                if($first){
+                    $fields[] = reset($first);
+                }
             }
             if (count($fields) !== count($component->getFields())) {
                 foreach ($component->getFields() as $field) {
