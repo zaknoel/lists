@@ -45,7 +45,8 @@ class Component
         protected ?Closure $canDelete = null,
         public string $customButtons = '',
         public ?Closure $callCustomDetailButtons = null,
-        public bool $bShowEditButtonOnDetail = true
+        public bool $bShowEditButtonOnDetail = true,
+        public array $customViews = [],
     ) {
         // init component
         $this->className = class_basename($this->model);

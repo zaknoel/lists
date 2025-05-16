@@ -77,7 +77,8 @@ class ListComponent
             });
             $data->rawColumns($columns);
             if ($component->getActions()) {
-                $data->addColumn('action', fn ($item) => view('lists::actions',
+                $view=$component->customViews['actions'] ?? 'lists::actions';
+                $data->addColumn('action', fn ($item) => view($view,
                     ['item' => $item, 'actions' => $component->getFilteredActions($item), 'list' => $list]));
             }
             if ($isAjax) {
@@ -105,8 +106,8 @@ class ListComponent
                 $filters[] = $field;
             }
         }
-
-        return view('lists::list', [
+        $view = $component->customViews['index'] ?? 'lists::index';
+        return view($view, [
             'length' => $length,
             'curSort' => $curSort,
             'component' => $component,
@@ -207,11 +208,12 @@ class ListComponent
         $fields = $component->getFilteredFields(fn (Field $item) => $item->show_in_detail);
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
             $field->item($item);
-
             return $field;
         });
+        $view=$component->customViews['detail'] ?? 'lists::detail';
 
-        return view('lists::detail',
+
+        return view($view,
             [
                 'pages' => $component->getPages(),
                 'component' => $component,
@@ -239,8 +241,8 @@ class ListComponent
 
             return $field;
         });
-
-        return view('lists::form',
+        $view=$component->customViews['form'] ?? 'lists::form';
+        return view($view,
             [
                 'item' => $item,
                 'scripts' => $component->scripts(),
@@ -268,7 +270,8 @@ class ListComponent
         });
         $item = self::save($item, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            return view('lists::success', ['item' => $item]);
+            $view=$component->customViews['success'] ?? 'lists::success';
+            return view($view, ['item' => $item]);
         }
 
         return Redirect::route('lists_detail', ['list' => $list, 'item' => $item])->with('js_success',
@@ -299,8 +302,8 @@ class ListComponent
 
             return $field;
         });
-
-        return view('lists::form',
+        $view=$component->customViews['form'] ?? 'lists::form';
+        return view($view,
             [
                 'item' => $item,
                 'scripts' => $component->scripts(),
@@ -326,7 +329,8 @@ class ListComponent
         });
         $item = self::save(null, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            return view('lists::success', ['item' => $item]);
+            $view=$component->customViews['success'] ?? 'lists::success';
+            return view($view, ['item' => $item]);
         }
 
         return Redirect::route('lists', $list)->with('js_success', 'Успешно добавлен');
@@ -385,8 +389,8 @@ class ListComponent
         } else {
             $view = '';
         }
-
-        return view('lists::detail',
+        $detail_view=$component->customViews['detail'] ?? 'lists::detail';
+        return view($detail_view,
             [
                 'component' => $component,
                 'view' => $view,
