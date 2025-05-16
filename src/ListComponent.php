@@ -106,7 +106,7 @@ class ListComponent
                 $filters[] = $field;
             }
         }
-        $view = $component->customViews['index'] ?? 'lists::index';
+        $view = $component->customViews['index'] ?? 'lists::list';
         return view($view, [
             'length' => $length,
             'curSort' => $curSort,
