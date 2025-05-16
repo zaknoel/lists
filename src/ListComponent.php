@@ -77,7 +77,7 @@ class ListComponent
             });
             $data->rawColumns($columns);
             if ($component->getActions()) {
-                $view=$component->customViews['actions'] ?? 'lists::actions';
+                $view = $component->customViews['actions'] ?? 'lists::actions';
                 $data->addColumn('action', fn ($item) => view($view,
                     ['item' => $item, 'actions' => $component->getFilteredActions($item), 'list' => $list]));
             }
@@ -107,6 +107,7 @@ class ListComponent
             }
         }
         $view = $component->customViews['index'] ?? 'lists::index';
+
         return view($view, [
             'length' => $length,
             'curSort' => $curSort,
@@ -208,10 +209,10 @@ class ListComponent
         $fields = $component->getFilteredFields(fn (Field $item) => $item->show_in_detail);
         $fields = Arr::map($fields, static function (Field $field) use ($item) {
             $field->item($item);
+
             return $field;
         });
-        $view=$component->customViews['detail'] ?? 'lists::detail';
-
+        $view = $component->customViews['detail'] ?? 'lists::detail';
 
         return view($view,
             [
@@ -241,7 +242,8 @@ class ListComponent
 
             return $field;
         });
-        $view=$component->customViews['form'] ?? 'lists::form';
+        $view = $component->customViews['form'] ?? 'lists::form';
+
         return view($view,
             [
                 'item' => $item,
@@ -270,7 +272,8 @@ class ListComponent
         });
         $item = self::save($item, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            $view=$component->customViews['success'] ?? 'lists::success';
+            $view = $component->customViews['success'] ?? 'lists::success';
+
             return view($view, ['item' => $item]);
         }
 
@@ -302,7 +305,8 @@ class ListComponent
 
             return $field;
         });
-        $view=$component->customViews['form'] ?? 'lists::form';
+        $view = $component->customViews['form'] ?? 'lists::form';
+
         return view($view,
             [
                 'item' => $item,
@@ -329,7 +333,8 @@ class ListComponent
         });
         $item = self::save(null, $fields, $request, $component);
         if ($request->get('frame', 0)) {
-            $view=$component->customViews['success'] ?? 'lists::success';
+            $view = $component->customViews['success'] ?? 'lists::success';
+
             return view($view, ['item' => $item]);
         }
 
@@ -389,7 +394,8 @@ class ListComponent
         } else {
             $view = '';
         }
-        $detail_view=$component->customViews['detail'] ?? 'lists::detail';
+        $detail_view = $component->customViews['detail'] ?? 'lists::detail';
+
         return view($detail_view,
             [
                 'component' => $component,
