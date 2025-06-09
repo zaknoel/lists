@@ -6,6 +6,7 @@ use Artisan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
@@ -89,7 +90,9 @@ class ListComponent
                 try {
                     return Excel::download(new ListImport($data->toArray(), $fields), $list.'.xlsx');
                 } catch (Throwable $e) {
-                    report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+                    if(isReportable($e)){
+                        report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+                    }
                 }
 
             }
@@ -185,7 +188,10 @@ class ListComponent
             $component->eventOnAfterSave($item);
 
         } catch (Throwable $e) {
-            report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+
+            if(isReportable($e)){
+                report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+            }
             // Throw the exception
             throw ValidationException::withMessages([
                 'custom_field' => $e->getMessage(),

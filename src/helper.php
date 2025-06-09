@@ -16,3 +16,9 @@ if (! function_exists('getCurPageParams')) {
         return '/'.trim(request()?->path().'?'.http_build_query($r), '?');
     }
 }
+if (! function_exists('isReportable')) {
+    function isReportable($e): string
+    {
+        return App::make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->shouldReport($e);
+    }
+}
