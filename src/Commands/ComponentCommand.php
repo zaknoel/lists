@@ -24,8 +24,7 @@ class ComponentCommand extends Command
         // Create the component file
         if (! File::exists($componentPath)) {
             File::ensureDirectoryExists(dirname($componentPath));
-            File::put($componentPath, "
-<?php
+            File::put($componentPath, "\<?php
 use App\Models\{$model};
 use Zak\Lists\Component;
 use Zak\Lists\Fields\ID;
