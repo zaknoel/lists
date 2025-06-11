@@ -39,7 +39,7 @@ class Image extends File
     public function indexHandler()
     {
         if ($this->item->{$this->attribute}) {
-            $this->value = "<a target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>
+            $this->value = "<a style='min-width:100px; display:block' target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>
                 <img src='".Storage::url($this->item->{$this->attribute})."' style='max-width: 100px; max-height: 100px;'>
 </a>";
         } else {
