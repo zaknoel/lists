@@ -326,8 +326,8 @@ class Component
 
     public function checkCustomPath(string $string, $context = null): void
     {
-        if ($this->${$string} && is_callable($this->${$string})) {
-            $redirectTo = call_user_func($this->${$string}, $context);
+        if ($this->{$string} && is_callable($this->{$string})) {
+            $redirectTo = call_user_func($this->{$string}, $context);
             if ($redirectTo) {
                 header('Location: '.$redirectTo);
                 exit;
@@ -346,8 +346,8 @@ class Component
             'lists_delete' => 'customDeletePage',
         ];
         $string = $routeAList[$route] ?? $route;
-        if ($this->${$string} && is_callable($this->${$string})) {
-            $redirectTo = call_user_func($this->${$string}, $context);
+        if ($this->{$string} && is_callable($this->{$string})) {
+            $redirectTo = call_user_func($this->{$string}, $context);
             if ($redirectTo) {
                 return $redirectTo;
             }
