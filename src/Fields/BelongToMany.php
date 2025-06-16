@@ -2,6 +2,8 @@
 
 namespace Zak\Lists\Fields;
 
+use Zak\Lists\ListComponent;
+
 class BelongToMany extends Select
 {
     public string $model;
@@ -94,11 +96,11 @@ class BelongToMany extends Select
     {
         if ($this->item->{$this->attribute}->count()) {
             if ($this->list && auth()->user()->can('viewAny', $this->model)) {
+                $c = ListComponent::getComponent($this->list);
                 $this->value = implode(', ', $this->item->{$this->attribute}
-                    ->each(function ($item) {
-                        $item->{$this->field.'_new'} = "<a href='".route('lists_detail', [
-                            $this->list, $item,
-                        ])."' target='_blank' class='text-secondary'>".$item->{$this->field}.'</a>';
+                    ->each(function ($item) use ($c) {
+                        $item->{$this->field.'_new'} = "<a href='".$c->getRoute('lists_detail', $this->list,
+                                $item)."' target='_blank' class='text-secondary'>".$item->{$this->field}.'</a>';
                     })
                     ->pluck($this->field.'_new')->toArray());
             }
@@ -111,7 +113,7 @@ class BelongToMany extends Select
 
     public function saveValue($item, $data): void
     {
-        if (! $item->id) {
+        if (!$item->id) {
             $item->save();
         }
         $value = array_filter(array_unique($data[$this->attribute] ?? []));

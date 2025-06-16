@@ -1,4 +1,4 @@
-@php use Zak\Lists\Fields\Relation; @endphp
+@php use Zak\Lists\Fields\Relation;use Zak\Lists\ListComponent; @endphp
 @php /**@var Relation $field*/ @endphp
 <div class="input-group">
     <select
@@ -22,8 +22,9 @@
     @if($field->list && $field->createButton && auth()->user()->can('create', $field->model))
         <div class="input-group-append">
             <button class="btn btn-secondary"
-                     onclick="createRealtion(this, '{{$field->list}}', '{{$field->attribute}}')"
-                    title="Добавить новый" style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 100%"  type="button">
+                    onclick="createRealtion(this, '{{ListComponent::getComponent($field->list)->getRoute('lists_add', $field->list)}}', '{{$field->attribute}}')"
+                    title="Добавить новый" style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 100%"
+                    type="button">
                 <i class="ti ti-plus"></i>
             </button>
         </div>

@@ -8,13 +8,13 @@
         {!! call_user_func($component->callCustomDetailButtons, $item) !!}
     @endif
     @if($component->userCanEdit($item) && $component->bShowEditButtonOnDetail)
-        <a href="{{route("lists_edit", ["list"=>$list, "item"=>$item->id])}}" class="btn btn-primary">
+        <a href="{{$component->getRoute('lists_edit',$list, $item)}}" class="btn btn-primary">
             <i class="ti ti-edit fs-5"></i>
             Редактировать
         </a>
     @endif
     @if($component->userCanDelete($item))
-        <form method="post" class="d-inline" action="{{route("lists_delete", ["list"=>$list, "item"=>$item->id])}}">
+        <form method="post" class="d-inline" action="{{$component->getRoute('lists_delete',$list, $item)}}">
             @csrf
             <button onclick="return confirm('Вы уверены, что хотите удалить этот элемент?')" class="btn btn-danger">
                 <i class="ti ti-trash fs-5"></i>
@@ -30,7 +30,7 @@
             id="pills-tab">
             <li class="nav-item">
                 <a
-                    href="{{route("lists_detail", ["list"=>$list, 'item'=>$item])}}"
+                    href="{{$component->getRoute('lists_detail', $list, $item)}}"
                     class="nav-link position-relative rounded-0 d-flex align-items-center
                     justify-content-center bg-transparent fs-3 py-6 {{!isset($page)?'active':''}}">
                     <span class="d-none d-md-block">Общая информация</span>

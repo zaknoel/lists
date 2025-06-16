@@ -6,7 +6,7 @@
         <a class="btn btn-info" href="{{route("lists", $list)}}"> <i class="fa fa-arrow-circle-left me-2"></i>Назад к
             списку</a>
         @if($item->id)
-            <a class="btn btn-info" href="{{route("lists_detail", ["list"=>$list, "item"=>$item])}}"> <i
+            <a class="btn btn-info" href="{{$component->getRoute('lists_detail', $list, $item)}}"> <i
                     class="fa fa-arrow-circle-right me-2"></i>Детальная страница</a>
         @endif
     @endif
@@ -91,7 +91,7 @@
         let winData = {}
 
         function createRealtion(el, list, attr) {
-            const url = '/lists/' + list + '/add?frame=1';
+            const url = list+'?frame=1';
             if (win) {
                 win.close();
             }

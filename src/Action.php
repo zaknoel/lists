@@ -101,19 +101,18 @@ class Action
 
     public function getLink($item, $list, $name = '', $class = '')
     {
+        $c=ListComponent::getComponent($list);
         $name = $name ?: $this->name;
         if ($this->action === 'show') {
-            return '<a class="'.$class.'" href="'.route('lists_detail',
-                ['list' => $list, 'item' => $item]).'">'.$name.'</a>';
+            return '<a class="'.$class.'" href="'.$c->getRoute('lists_detail', $list, $item).'">'.$name.'</a>';
         }
 
         if ($this->action === 'edit') {
-            return '<a class="'.$class.'" href="'.route('lists_edit',
-                ['list' => $list, 'item' => $item]).'">'.$name.'</a>';
+            return '<a class="'.$class.'" href="'.$c->getRoute('lists_edit', $list, $item).'">'.$name.'</a>';
         }
         if ($this->action === 'delete') {
             return ' <form onsubmit="return confirm(\'Вы уверены, что хотите удалить этот элемент?\')" method="post"
-                      action="'.route('lists_delete', ['list' => $list, 'item' => $item]).'?'.request()->getQueryString().'">
+                      action="'.$c->getRoute('lists_delete', $list, $item).'?'.request()->getQueryString().'">
         <input type="hidden" name="_token" value=" '.csrf_token().'" />
                     <a class="dropdown-item" onclick="$(this).parent().submit()">'.$name.'</a>
                 </form>';

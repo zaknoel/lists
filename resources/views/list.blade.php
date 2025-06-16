@@ -3,7 +3,7 @@
 @section("page-title", $component->getLabel())
 @section("buttons")
     @if($component->userCanAdd())
-        <a class="btn btn-info" href="{{route("lists_add", $list)}}">
+        <a class="btn btn-info" href="{{$component->getRoute('list_add', $list)}}">
             <i class="fa fa-plus me-2"></i>Добавить
             новый {{$component->getSingleLabel()}}
         </a>

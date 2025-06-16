@@ -2,6 +2,8 @@
 
 namespace Zak\Lists\Fields;
 
+use Zak\Lists\ListComponent;
+
 class Relation extends Select
 {
     public bool $searchable = false;
@@ -103,7 +105,8 @@ class Relation extends Select
             $attr = str_replace('_id', '', $this->attribute);
             if ($this->list && auth()->user()->can('viewAny', $this->model)) {
                 $item = $this->item->{$attr};
-                $this->value = "<a class='text-secondary' href='".route('lists_detail', [$this->list, $item])."' target='_blank'>".$item->{$this->field}.'</a>';
+                $c=ListComponent::getComponent($this->list);
+                $this->value = "<a class='text-secondary' href='".$c->getRoute('lists_detail', $this->list, $item)."' target='_blank'>".$item->{$this->field}.'</a>';
             } else {
                 $this->value = $this->item->{$attr}?->{$this->field};
             }

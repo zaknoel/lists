@@ -47,18 +47,22 @@ class Component
         public ?Closure $callCustomDetailButtons = null,
         public bool $bShowEditButtonOnDetail = true,
         public array $customViews = [],
+        public ?Closure $customAddPage = null,
+        public ?Closure $customEditPage = null,
+        public ?Closure $customDetailPage = null,
+        public ?Closure $customDeletePage = null,
     ) {
         // init component
         $this->className = class_basename($this->model);
         $user = auth()->user();
         $this->checkPolice();
-        $this->canAdd = $this->canAdd ?? fn () => $user->can('add', $this->model);
-        $this->canEdit = $this->canEdit ?? static fn ($item) => $user->can('edit', $item);
-        $this->canDelete = $this->canDelete ?? static fn ($item) => $user->can('delete', $item);
-        $this->canView = $this->canView ?? static fn ($item) => $user->can('view', $item);
-        $this->canViewAny = $this->canViewAny ?? fn () => $user->can('viewAny', $this->model);
+        $this->canAdd = $this->canAdd ?? fn() => $user->can('add', $this->model);
+        $this->canEdit = $this->canEdit ?? static fn($item) => $user->can('edit', $item);
+        $this->canDelete = $this->canDelete ?? static fn($item) => $user->can('delete', $item);
+        $this->canView = $this->canView ?? static fn($item) => $user->can('view', $item);
+        $this->canViewAny = $this->canViewAny ?? fn() => $user->can('viewAny', $this->model);
 
-        if (! $this->userCanViewAny()) {
+        if (!$this->userCanViewAny()) {
             abort(403);
         }
         if (is_null($this->actions)) {
@@ -68,7 +72,7 @@ class Component
                 Action::make('Удалить')->deleteAction(),
             ]);
         }
-        if (! $this->model) {
+        if (!$this->model) {
             throw new InvalidArgumentException('Model not set!');
         }
         $this->grid_id = $this->model;
@@ -95,7 +99,7 @@ class Component
     private function checkPolice(): void
     {
         $path = app_path('Policies/'.$this->className.'Policy.php');
-        if (! file_exists($path)) {
+        if (!file_exists($path)) {
             Artisan::call('make:policy', ['name' => $this->className.'Policy', '-m' => $this->model]);
             $policyFilePath = app_path('Policies/'.$this->className.'Policy.php');
             $policyContent = file_get_contents($policyFilePath);
@@ -147,8 +151,8 @@ class Component
         foreach ($this->getFields() as $field) {
             if (
                 $field->show_in_index
-                && (! $this->options->value['columns'] || in_array($field->attribute, $this->options->value['columns'],
-                    false))
+                && (!$this->options->value['columns'] || in_array($field->attribute, $this->options->value['columns'],
+                        false))
             ) {
                 if ($field instanceof Relation) {
                     $rname = $field->relationName ?: str_replace('_id', '', $field->attribute);
@@ -281,7 +285,7 @@ class Component
 
         $result = [];
         foreach ($scripts as $k => $v) {
-            if (Arr::where($this->fields, fn (Field $item) => $item->componentName() === $k)) {
+            if (Arr::where($this->fields, fn(Field $item) => $item->componentName() === $k)) {
                 $result[] = implode(PHP_EOL, $v);
             }
         }
@@ -318,5 +322,36 @@ class Component
 
         return $actions;
 
+    }
+
+    public function checkCustomPath(string $string, $context = null): void
+    {
+        if ($this->${$string} && is_callable($this->${$string})) {
+            $redirectTo = call_user_func($this->${$string}, $context);
+            if ($redirectTo) {
+                header('Location: '.$redirectTo);
+                exit;
+            }
+        }
+    }
+
+    public function getRoute($route, $list, $context = null): string
+    {
+        $routeAList = [
+            'lists_add' => 'customAddPage',
+            'add_save' => 'customAddPage',
+            'lists_edit' => 'customEditPage',
+            'edit_save' => 'customEditPage',
+            'lists_detail' => 'customDetailPage',
+            'lists_delete' => 'customDeletePage',
+        ];
+        $string = $routeAList[$route] ?? $route;
+        if ($this->${$string} && is_callable($this->${$string})) {
+            $redirectTo = call_user_func($this->${$string}, $context);
+            if ($redirectTo) {
+                return $redirectTo;
+            }
+        }
+        return route($route, ['list' => $list, 'item' => $context ? $context->id : null]);
     }
 }

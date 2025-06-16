@@ -6,7 +6,6 @@ use Artisan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
@@ -90,7 +89,7 @@ class ListComponent
                 try {
                     return Excel::download(new ListImport($data->toArray(), $fields), $list.'.xlsx');
                 } catch (Throwable $e) {
-                    if(isReportable($e)){
+                    if (isReportable($e)) {
                         report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
                     }
                 }
@@ -125,7 +124,7 @@ class ListComponent
         return $request->ajax() && $request->header('X-Requested-With') === 'XMLHttpRequest';
     }
 
-    private static function getComponent(string $list, $is_index = false): Component
+    public static function getComponent(string $list, $is_index = false): Component
     {
         $file = (config('lists.path') ?? app_path('/Lists/')).$list.'.php';
         if (!file_exists($file)) {
@@ -189,7 +188,7 @@ class ListComponent
 
         } catch (Throwable $e) {
 
-            if(isReportable($e)){
+            if (isReportable($e)) {
                 report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
             }
             // Throw the exception
@@ -205,6 +204,7 @@ class ListComponent
     public static function detailHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
+        $component->checkCustomPath('customDetailPage', $item);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
@@ -246,6 +246,8 @@ class ListComponent
     public static function editFormHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
+        $component->checkCustomPath('customEditPage', $item);
+
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
@@ -278,6 +280,7 @@ class ListComponent
     public static function editSaveHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
+        $component->checkCustomPath('customEditPage', $item);
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
@@ -294,7 +297,7 @@ class ListComponent
             return view($view, ['item' => $item]);
         }
 
-        return Redirect::route('lists_detail', ['list' => $list, 'item' => $item])->with('js_success',
+        return Redirect::route($component->getRoute('lists_detail', $list, $item))->with('js_success',
             'Успешно обновлено!');
     }
 
@@ -304,6 +307,8 @@ class ListComponent
         if (!$component->userCanAdd()) {
             abort(403);
         }
+        $component->checkCustomPath('customAddPage');
+
 
         $item = new ($component->getModel());
         if ($request->has('copy_from')) {
@@ -343,7 +348,7 @@ class ListComponent
         if (!$component->userCanAdd()) {
             abort(403);
         }
-
+        $component->checkCustomPath('customAddPage');
         $fields = Arr::where($component->getFields(), static function (Field $field) {
             return $field->show_on_add;
         });
@@ -359,6 +364,7 @@ class ListComponent
     public static function deleteHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
+        $component->checkCustomPath('customDeletePage', $item);
         $item = $component->getQuery()->where('id', $item)->firstOrFail();
         /** @var Model $item */
         if (!$component->userCanDelete($item)) {
