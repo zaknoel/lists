@@ -246,11 +246,12 @@ class ListComponent
     public static function editFormHandler(Request $request, string $list, int $item)
     {
         $component = self::getComponent($list);
-        $component->checkCustomPath('customEditPage', $item);
+
 
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
         $item = $query->where('id', $item)->firstOrFail();
+        $component->checkCustomPath('customEditPage', $item);
         if (!$component->userCanEdit($item)) {
             abort(403);
         }
@@ -267,6 +268,7 @@ class ListComponent
         return view($view,
             [
                 'item' => $item,
+                'component' => $component,
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
                 'list' => $list,
@@ -330,6 +332,7 @@ class ListComponent
         $view = $component->customViews['form'] ?? 'lists::form';
         return view($view,
             [
+                'component' => $component,
                 'item' => $item,
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
