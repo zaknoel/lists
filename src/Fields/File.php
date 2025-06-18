@@ -19,20 +19,9 @@ class File extends Text
         'max:60048' => 'The file size must not exceed 60MB.',
     ];
 
-    public function searchable(): static
-    {
-        $this->searchable = false;
 
-        return $this;
-    }
 
-    public function filterable(): static
-    {
-        $this->filterable = false;
 
-        return $this;
-
-    }
 
     public function disk($disk): static
     {

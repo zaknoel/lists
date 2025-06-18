@@ -9,14 +9,6 @@ class Boolean extends Text
     public array $rules = [
         'boolean' => 'Неправильная значение',
     ];
-
-    public function searchable(): static
-    {
-        $this->searchable = false;
-
-        return $this;
-    }
-
     public int $width = 12;
 
     public string $jsOptions = "width:'100px'";

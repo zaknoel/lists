@@ -34,12 +34,7 @@ class BelongToMany extends Select
         return $this;
     }
 
-    public function searchable(): static
-    {
-        $this->searchable = false;
 
-        return $this;
-    }
 
     public function model($model): static
     {
