@@ -299,7 +299,7 @@ class ListComponent
             return view($view, ['item' => $item]);
         }
 
-        return Redirect::route($component->getRoute('lists_detail', $list, $item))->with('js_success',
+        return Redirect::to($component->getRoute('lists_detail', $list, $item))->with('js_success',
             'Успешно обновлено!');
     }
 
