@@ -126,35 +126,37 @@ class ListComponent
 
     public static function getComponent(string $list, $is_index = false): Component
     {
-        $file = (config('lists.path') ?? app_path('/Lists/')).$list.'.php';
-        if (!file_exists($file)) {
-            Artisan::call('zak:component', ['name' => $list]);
-            abort(404, 'Component not found: '.$list.'. Auto generated at '.$file);
-        }
-        $data = (include $file) ?? null;
-        if (!$data instanceof Component) {
-            abort(404, 'Component not configured properly: '.$list);
-        }
-        $component = $data;
-        if (($component->options->value['sort'] ?? []) && $is_index) {
-            $fields = [];
-            foreach ($component->options->value['sort'] as $col) {
-                $first = Arr::where($component->getFields(), fn($item) => $item->attribute === $col);
-                if ($first) {
-                    $fields[] = reset($first);
-                }
+        return once(static function () use ($list, $is_index) {
+            $file = (config('lists.path') ?? app_path('/Lists/')).$list.'.php';
+            if (!file_exists($file)) {
+                Artisan::call('zak:component', ['name' => $list]);
+                abort(404, 'Component not found: '.$list.'. Auto generated at '.$file);
             }
-            if (count($fields) !== count($component->getFields())) {
-                foreach ($component->getFields() as $field) {
-                    if (!in_array($field, $fields, true)) {
-                        $fields[] = $field;
+            $data = (include $file) ?? null;
+            if (!$data instanceof Component) {
+                abort(404, 'Component not configured properly: '.$list);
+            }
+            $component = $data;
+            if (($component->options->value['sort'] ?? []) && $is_index) {
+                $fields = [];
+                foreach ($component->options->value['sort'] as $col) {
+                    $first = Arr::where($component->getFields(), fn($item) => $item->attribute === $col);
+                    if ($first) {
+                        $fields[] = reset($first);
                     }
                 }
+                if (count($fields) !== count($component->getFields())) {
+                    foreach ($component->getFields() as $field) {
+                        if (!in_array($field, $fields, true)) {
+                            $fields[] = $field;
+                        }
+                    }
+                }
+                $component->setFields($fields);
             }
-            $component->setFields($fields);
-        }
+            return $component;
+        });
 
-        return $component;
     }
 
     private static function filterFields(Component $component, string $string)
