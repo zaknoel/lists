@@ -69,123 +69,123 @@ trait FieldProperty
         return $this;
     }
 
-    public function defaultAction(): static
+    public function defaultAction($value=true): static
     {
-        $this->defaultAction = true;
+        $this->defaultAction = $value;
 
         return $this;
     }
 
-    public function filterable(): static
+    public function filterable($value=true): static
     {
-        $this->filterable = true;
+        $this->filterable = $value;
 
         return $this;
     }
 
-    public function multiple(): static
+    public function multiple($value=true): static
     {
-        $this->multiple = true;
+        $this->multiple = $value;
 
         return $this;
     }
 
-    public function sortable(): static
+    public function sortable($value=true): static
     {
-        $this->sortable = true;
+        $this->sortable = $value;
 
         return $this;
     }
 
-    public function showOnIndex(): static
+    public function showOnIndex($value=true): static
     {
-        $this->show_in_index = true;
+        $this->show_in_index = $value;
 
         return $this;
     }
 
-    public function virtual(): static
+    public function virtual($value=true): static
     {
-        $this->virtual = true;
+        $this->virtual = $value;
 
         return $this;
     }
 
-    public function required(): static
+    public function required($value=true): static
     {
-        $this->required = true;
+        $this->required = $value;
 
         return $this;
     }
 
-    public function searchable(): static
+    public function searchable($value=true): static
     {
-        $this->searchable = true;
+        $this->searchable = $value;
 
         return $this;
     }
 
-    public function hideOnIndex(): static
+    public function hideOnIndex($value=true): static
     {
-        $this->show_in_index = false;
+        $this->show_in_index = !$value;
 
         return $this;
     }
 
-    public function showOnDetail(): static
+    public function showOnDetail($value=true): static
     {
-        $this->show_in_detail = true;
+        $this->show_in_detail = $value;
 
         return $this;
     }
 
-    public function hideOnDetail(): static
+    public function hideOnDetail($value=true): static
     {
-        $this->show_in_detail = false;
+        $this->show_in_detail = !$value;
 
         return $this;
     }
 
-    public function showOnUpdate(): static
+    public function showOnUpdate($value=true): static
     {
-        $this->show_on_update = true;
+        $this->show_on_update = $value;
 
         return $this;
     }
 
-    public function hideOnUpdate(): static
+    public function hideOnUpdate($value=true): static
     {
-        $this->show_on_update = false;
+        $this->show_on_update = !$value;
 
         return $this;
     }
 
-    public function showOnAdd(): static
+    public function showOnAdd($value=true): static
     {
-        $this->show_on_add = true;
+        $this->show_on_add = $value;
 
         return $this;
     }
 
-    public function hideOnAdd(): static
+    public function hideOnAdd($value=true): static
     {
-        $this->show_on_add = false;
+        $this->show_on_add = !$value;
 
         return $this;
     }
 
-    public function showOnForms(): static
+    public function showOnForms($value=true): static
     {
-        $this->show_on_add = true;
-        $this->show_on_update = true;
+        $this->show_on_add = $value;
+        $this->show_on_update = $value;
 
         return $this;
     }
 
-    public function hideOnForms(): static
+    public function hideOnForms($value=true): static
     {
-        $this->show_on_add = false;
-        $this->show_on_update = false;
+        $this->show_on_add = !$value;
+        $this->show_on_update = !$value;
 
         return $this;
     }
