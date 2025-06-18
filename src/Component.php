@@ -93,7 +93,9 @@ class Component
             ]
 
         );
-
+        $this->fields = array_filter($this->fields, static function ($field) {
+            return $field instanceof Field;
+        });
     }
 
     private function checkPolice(): void
