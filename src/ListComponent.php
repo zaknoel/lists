@@ -69,13 +69,13 @@ class ListComponent
             $defaultAction = Arr::first($component->getActions(), function (Action $action) {
                 return $action->default;
             });
-
             Arr::map($fields, static function (Field $field) use ($data, $defaultAction, $list) {
-
                 $data->editColumn($field->attribute,
                     fn($item) => $field->item($item)->showIndex($item, $list, $defaultAction));
             });
+
             $data->rawColumns($columns);
+
             if ($component->getActions()) {
                 $view = $component->customViews['actions'] ?? 'lists::actions';
                 $data->addColumn('action', fn($item) => view($view,

@@ -13,6 +13,12 @@ class Text extends Field
         return $this;
     }
 
+    public function setType($type='text')
+    {
+        $this->type = $type;
+        return $this;
+    }
+
     public function componentName(): string
     {
         return 'text';
@@ -20,7 +26,7 @@ class Text extends Field
 
     public function type()
     {
-        return 'text';
+        return $this->type ?: 'text';
     }
 
     public function filteredValue(): string

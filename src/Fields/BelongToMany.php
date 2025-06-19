@@ -108,6 +108,9 @@ class BelongToMany extends Select
 
     public function saveValue($item, $data): void
     {
+        if(!$this->eventOnSaveForm($item, $data)){
+            return;
+        }
         if (!$item->id) {
             $item->save();
         }

@@ -20,7 +20,7 @@ abstract class Field
 
     public $value;
 
-    protected string $type;
+    protected string $type='';
 
     protected string $component_name;
 
@@ -240,6 +240,7 @@ abstract class Field
     {
         $this->indexHandler();
         $this->eventOnShowList();
+
         if ($action && $this->defaultAction) {
             return $action->getLink($item, $list, $this->value);
         }

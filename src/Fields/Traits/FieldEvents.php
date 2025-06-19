@@ -22,6 +22,11 @@ trait FieldEvents
             call_user_func($this->listDisplayCallback, $this);
         }
     }
+    public function showDetailAsIndex()
+    {
+        $this->detailDisplayCallback=$this->listDisplayCallback;
+        return $this;
+    }
 
     protected function eventOnShowDetail()
     {
@@ -40,8 +45,9 @@ trait FieldEvents
     protected function eventOnSaveForm($item, $data)
     {
         if (is_callable($this->onSaveFormCallback)) {
-            call_user_func($this->onSaveFormCallback, $item, $data);
+            return call_user_func($this->onSaveFormCallback, $item, $data);
         }
+        return $data;
     }
 
     public function onShowList(Closure $closure): static
