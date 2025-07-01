@@ -51,6 +51,7 @@ class Component
         public ?Closure $customEditPage = null,
         public ?Closure $customDetailPage = null,
         public ?Closure $customDeletePage = null,
+        public array $customLabels = []
     ) {
         // init component
         $this->className = class_basename($this->model);
@@ -124,6 +125,13 @@ class Component
     public function getLabel(): string
     {
         return $this->label;
+    }
+
+    public function getCustomLabel($key)
+    {
+
+
+        return $this->customLabels[$key] ?? null;
     }
 
     public function getSingleLabel(): string

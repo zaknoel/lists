@@ -4,8 +4,8 @@
 @section("buttons")
     @if($component->userCanAdd())
         <a class="btn btn-info" href="{{$component->getRoute('lists_add', $list)}}">
-            <i class="fa fa-plus me-2"></i>Добавить
-            новый {{$component->getSingleLabel()}}
+            <i class="fa fa-plus me-2"></i>
+            {{$component->getCustomLabel("add")??'Добавить новый '.$component->getSingleLabel()}}
         </a>
     @endif
     @if($component->customButtons)

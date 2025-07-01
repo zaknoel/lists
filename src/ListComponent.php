@@ -274,8 +274,8 @@ class ListComponent
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
                 'list' => $list,
-                'title' => 'Редактировать '.$component->getSingleLabel(),
-                'pageTitle' => 'Редактировать '.$component->getSingleLabel(),
+                'title' => $component->getCustomLabel("edit")??'Редактировать '.$component->getSingleLabel(),
+                'pageTitle' => $component->getCustomLabel("edit")??'Редактировать '.$component->getSingleLabel(),
                 'frame' => $request->get('frame', 0),
             ]
         );
@@ -339,8 +339,8 @@ class ListComponent
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
                 'list' => $list,
-                'title' => 'Добавить новый '.$component->getSingleLabel(),
-                'pageTitle' => 'Новый '.$component->getSingleLabel(),
+                'title' => $component->getCustomLabel("add")??'Добавить новый '.$component->getSingleLabel(),
+                'pageTitle' =>$component->getCustomLabel("add")?? 'Новый '.$component->getSingleLabel(),
                 'frame' => $request->get('frame', 0),
             ]
         );
