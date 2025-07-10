@@ -380,7 +380,9 @@ class ListComponent
         $item->deleteOrFail();
         $component->eventOnAfterDelete($item);
 
-        return back()->with('js_success', 'Элемент удалена успешно !');
+        return redirect()->route('lists', $list)->with('js_success', 'Элемент удален успешно !');
+
+        //return back()->with('js_success', 'Элемент удалена успешно !');
     }
 
     public static function optionHandler(Request $request, string $list)
