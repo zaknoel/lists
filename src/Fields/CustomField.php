@@ -4,6 +4,7 @@ namespace Zak\Lists\Fields;
 
 class CustomField extends Field
 {
+    public bool $searchable=false;
     public string $filtered_value = '';
 
     public function componentName(): string
