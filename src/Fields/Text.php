@@ -83,7 +83,7 @@ class Text extends Field
     {
 
         if ($this->multiple) {
-            $isJson = in_array($item->cast[$this->attribute] ?? false, ['array', 'json']);
+            $isJson = in_array($this->item->casts[$this->attribute] ?? false, ['array', 'json']);
             if ($isJson) {
                 $this->value = explode('|', $this->item->{$this->attribute}[0] ?? '');
             } else {
@@ -113,7 +113,7 @@ class Text extends Field
     public function indexHandler()
     {
         if ($this->multiple) {
-            $isJson = in_array($item->cast[$this->attribute] ?? false, ['array', 'json']);
+            $isJson = in_array($this->item->casts[$this->attribute] ?? false, ['array', 'json']);
             if ($isJson) {
                 $this->value = explode('|', $this->item->{$this->attribute}[0] ?? '');
             } else {
