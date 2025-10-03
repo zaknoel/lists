@@ -99,7 +99,7 @@ class Text extends Field
         if ($this->multiple) {
             $item->{$this->attribute} = implode('|', $data[$this->attribute] ?? []);
         } else {
-            $item->{$this->attribute} = $data[$this->attribute];
+            $item->{$this->attribute} = $data[$this->attribute]??'';
         }
 
         return $item;
