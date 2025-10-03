@@ -99,7 +99,7 @@ class Text extends Field
         if ($this->multiple) {
             $item->{$this->attribute} = implode('|', $data[$this->attribute] ?? []);
         } else {
-            $default = $this instanceof Relation ? null : '';
+            $default = $this instanceof Relation ? null : ($this instanceof Number ? 0 : '');
             $item->{$this->attribute} = $data[$this->attribute]??$default;
         }
 
