@@ -209,7 +209,15 @@ class ListComponent
         $component->checkCustomPath('customDetailPage', $item);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
-        $item = $query->where('id', $item)->firstOrFail();
+        $item = $query->where('id', $item)->first();
+        if(!$item){
+            $item = $query->withoutGlobalScopes()
+            ->where('id', $item)->first();
+            if($item){
+                return \redirect("/");
+            }
+            abort(404);
+        }
         if (!$component->userCanView($item)) {
             abort(403);
         }
@@ -252,7 +260,15 @@ class ListComponent
 
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
-        $item = $query->where('id', $item)->firstOrFail();
+        $item = $query->where('id', $item)->first();
+        if(!$item){
+            $item = $query->withoutGlobalScopes()
+                ->where('id', $item)->first();
+            if($item){
+                return \redirect("/");
+            }
+            abort(404);
+        }
         $component->checkCustomPath('customEditPage', $item);
         if (!$component->userCanEdit($item)) {
             abort(403);
@@ -409,7 +425,15 @@ class ListComponent
         $component = self::getComponent($list);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
-        $item = $query->where('id', $item)->firstOrFail();
+        $item = $query->where('id', $item)->first();
+        if(!$item){
+            $item = $query->withoutGlobalScopes()
+                ->where('id', $item)->first();
+            if($item){
+                return \redirect("/");
+            }
+            abort(404);
+        }
         if (!$component->userCanView($item)) {
             abort(403);
         }
