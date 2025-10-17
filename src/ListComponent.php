@@ -209,11 +209,15 @@ class ListComponent
         $component->checkCustomPath('customDetailPage', $item);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
+        $item_id=$item;
         $item = $query->where('id', $item)->first();
         if(!$item){
-            $item = $query->withoutGlobalScopes()
-            ->where('id', $item)->first();
+            $class=$query->getModel()::class;
+            $query2=$class::query();
+            $item=$query2->withoutGlobalScopes()
+                ->where('id', $item_id)->first();
             if($item){
+                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);
@@ -260,11 +264,15 @@ class ListComponent
 
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
+        $item_id=$item;
         $item = $query->where('id', $item)->first();
         if(!$item){
-            $item = $query->withoutGlobalScopes()
-                ->where('id', $item)->first();
+            $class=$query->getModel()::class;
+            $query2=$class::query();
+            $item=$query2->withoutGlobalScopes()
+                ->where('id', $item_id)->first();
             if($item){
+                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);
@@ -425,11 +433,15 @@ class ListComponent
         $component = self::getComponent($list);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
+        $item_id=$item;
         $item = $query->where('id', $item)->first();
         if(!$item){
-            $item = $query->withoutGlobalScopes()
-                ->where('id', $item)->first();
+            $class=$query->getModel()::class;
+            $query2=$class::query();
+            $item=$query2->withoutGlobalScopes()
+                ->where('id', $item_id)->first();
             if($item){
+                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);
