@@ -59,4 +59,9 @@ class ListController
 
         return ListComponent::optionHandler($request, $list);
     }
+
+    public function actions(Request $request, string $list)
+    {
+        return ListComponent::actionHandler($request, $list);
+    }
 }

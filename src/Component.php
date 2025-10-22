@@ -51,7 +51,8 @@ class Component
         public ?Closure $customEditPage = null,
         public ?Closure $customDetailPage = null,
         public ?Closure $customDeletePage = null,
-        public array $customLabels = []
+        public array $customLabels = [],
+        public array $bulkActions = [],
     ) {
         // init component
         $this->className = class_basename($this->model);
@@ -363,5 +364,16 @@ class Component
             }
         }
         return route($route, ['list' => $list, 'item' => $context ? $context->id : null]);
+    }
+    public function getSortInt()
+    {
+        $int=0;
+        if($this->getActions()) {
+            $int++;
+        }
+        if($this->bulkActions) {
+            $int++;
+        }
+        return $int;
     }
 }

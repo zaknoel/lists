@@ -7,6 +7,9 @@ use Zak\Lists\Http\Contollers\ListController;
 Route::middleware(config('lists.middleware', ['web', 'auth']))->group(function () {
     Route::post('/lists/{list}/option', [ListController::class, 'options'])->name('lists_option')
         ->withoutMiddleware([VerifyCsrfToken::class]);
+
+    Route::post('/lists/{list}/action', [ListController::class, 'actions'])->name('lists_action')
+        ->withoutMiddleware([VerifyCsrfToken::class]);
     //add
     Route::get('/lists/{list}/add', [ListController::class, 'add_form'])->name('lists_add');
     Route::post('/lists/{list}/add', [ListController::class, 'add_save']);

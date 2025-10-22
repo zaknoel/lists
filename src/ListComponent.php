@@ -65,6 +65,9 @@ class ListComponent
             if ($component->getActions()) {
                 $columns[] = 'action';
             }
+            if($component->bulkActions){
+                $columns[]='bulk_action_checkbox';
+            }
             $data->only($columns);
             $defaultAction = Arr::first($component->getActions(), function (Action $action) {
                 return $action->default;
@@ -80,6 +83,11 @@ class ListComponent
                 $view = $component->customViews['actions'] ?? 'lists::actions';
                 $data->addColumn('action', fn($item) => view($view,
                     ['item' => $item, 'actions' => $component->getFilteredActions($item), 'list' => $list]));
+            }
+            if($component->bulkActions){
+                $data->addColumn('bulk_action_checkbox', fn($item) => '<input type="checkbox"
+                x-on:click="$(\'#select-all-bulk\').prop(\'checked\', false);"
+                x-model="bulk_action" name="bulk-action-checkbox" class="bulk-action-checkbox" value="'.$item->id.'"/>');
             }
             if ($isAjax) {
                 return $data->make(true);
@@ -217,7 +225,7 @@ class ListComponent
             $item=$query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
             if($item){
-                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
+                setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);
@@ -272,7 +280,7 @@ class ListComponent
             $item=$query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
             if($item){
-                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
+                setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);
@@ -428,6 +436,31 @@ class ListComponent
         return back()->with('js_success', 'Настройки сохранены!');
     }
 
+    public static function actionHandler(Request $request, string $list)
+    {
+        $component = self::getComponent($list);
+        $data = $request->validate([
+            'action' => ['required', 'string'],
+            'items' => ['required', 'array'],
+        ]);
+        $action = Arr::first($component->bulkActions,
+            static fn(BulkAction $action) => $action->key === $data['action']);
+        if (!$action) {
+            return back()->with('js_error', 'Действие не найдено!');
+        }
+        try {
+            $items=$component->getQuery()->whereIn('id',$data['items'])->get();
+            call_user_func($action->callback, $items, $component, $request);
+        } catch (Throwable $e) {
+            if (isReportable($e)) {
+                report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+            }
+            return back()->with('js_error', 'Ошибка при выполнении действия: '.$e->getMessage());
+        }
+
+        return back()->with('js_success', $action->getSuccessMessage());
+    }
+
     public static function pagesHandler(Request $request, string $list, int $item, string $page)
     {
         $component = self::getComponent($list);
@@ -441,7 +474,7 @@ class ListComponent
             $item=$query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
             if($item){
-                setJsWarning("Проект переключилься на другой, некоторые данные могут быть недоступны.");
+                setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
             abort(404);

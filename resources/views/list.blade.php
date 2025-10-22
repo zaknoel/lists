@@ -13,7 +13,7 @@
     @endif
 @endsection
 @section("content")
-    <section class="datatables">
+    <section class="datatables" x-data="{bulk_action:[]}">
         @if($filters)
             <div class="card">
                 <div class="card-header bg-info d-flex align-items-center">
@@ -54,6 +54,19 @@
                         <thead>
                         <!-- start row -->
                         <tr>
+                            @if($component->bulkActions)
+                                <th>
+                                    <input type="checkbox" id="select-all-bulk"
+                                          x-on:click="
+                                              if($event.target.checked){
+                                                  bulk_action = Array.from(document.querySelectorAll('.bulk-action-checkbox')).map(el=>el.value)
+                                              }else{
+                                                  bulk_action = []
+                                              }"
+
+                                    >
+                                </th>
+                            @endif
                             @if($component->getActions())
                                 <th>
                                     <a href="javascript:void(0)"
@@ -259,8 +272,17 @@
                     orderable: false // Disable sorting for the first column
                 }
             ],
-            order: [[{{$component->getActions()?(int)$curSort[2]+1:(int)$curSort[2]}}, '{{$curSort[1]}}']],
+            order: [[{{(int)$curSort[2]+$component->getSortInt()}}, '{{$curSort[1]}}']],
             columns: [
+                    @if($component->bulkActions)
+                {
+                    data: "bulk_action_checkbox",
+                    name: "bulk_action_checkbox",
+                    searchable: false,
+                    orderable: false,
+                    width: "15px"
+                },
+                    @endif
                     @if($component->getActions())
                 {
                     data: "action",
@@ -284,6 +306,7 @@
         });
         table.on('init.dt', function () {
             $('.dataTables_scrollBody').css('position', 'static');
+            initBulkAction();
             //table.draw();
         });
         DataTable.ext.buttons.excel = {
@@ -296,6 +319,61 @@
                 window.location = '{!! getCurPageParams(['excel'=>"Y"]) !!}';
             }
         };
+        function executeAction(el, action){
+            const btn=$(el);
+
+            const items = [...document.querySelectorAll('.bulk-action-checkbox:checked')].map(el => el.value);
+            if(items.length===0){
+                alert('Пожалуйста выберите элементы для выполнения действия.');
+                return;
+            }
+            const confirmText = btn.attr('data-confirm');
+            if(confirmText){
+                if(!confirm(confirmText)){
+                    return;
+                }
+            }
+            const form = document.createElement('form');
+            form.method = 'POST';
+            form.action = '{!! route("lists_action", $list) !!}';
+            form.style.display = 'none';
+            const token = document.createElement('input');
+            token.type = 'hidden';
+            token.name = '_token';
+            token.value = '{{ csrf_token() }}';
+            form.appendChild(token);
+            const actionInput = document.createElement('input');
+            actionInput.type = 'hidden';
+            actionInput.name = 'action';
+            actionInput.value = action;
+            form.appendChild(actionInput);
+            for (const value of items) {
+                const input = document.createElement('input');
+                input.type = 'hidden';
+                input.name = "items[]";
+                input.value = value;
+                form.appendChild(input);
+            }
+            document.body.appendChild(form);
+            form.submit();
+        }
+
+        function initBulkAction(){
+            @if($component->bulkActions)
+            $('.dt-buttons').append(`
+                    <div class="btn-group ms-2" x-show="bulk_action.length">
+                            <button class="btn btn-danger dropdown-toggle" type="button" id="dropdownMenuButton" data-bs-toggle="dropdown" aria-expanded="false">
+                              Выберите действие
+                            </button>
+                            <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">
+                              @foreach($component->bulkActions as $action)
+                                <li><a class="dropdown-item" data-confirm="{{$action->confirmText()}}" onclick="executeAction(this, '{{$action->key()}}'); return false" href="javascript:void(0)">{{$action->label()}}</a></li>
+                              @endforeach
+                            </ul>
+                          </div>
+            `)
+            @endif
+        }
 
         function ClearFilter() {
             $('#filters input[type="checkbox"]').prop('checked', false);
