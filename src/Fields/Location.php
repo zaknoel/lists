@@ -20,8 +20,8 @@ class Location extends Text
         $value = $this->item->{$this->attribute};
         if ($value) {
             $l = explode(',', $value);
-            $lat = trim($l[0]) ?? '';
-            $lon = trim($l[1]) ?? '';
+            $lat = trim($l[0] ?? '');
+            $lon = trim($l[1] ?? '');
             if ($lat && $lon) {
                 $url = 'https://yandex.uz/maps/?ll='.$lon.'%2C'.$lat.'&mode=whatshere&whatshere%5Bpoint%5D='.$lon.'%2C'.$lat.'&whatshere%5Bzoom%5D=19&z=16';
                 $this->value = "<a target='_blank'  href='".$url."'>Показать на карте</a>";
