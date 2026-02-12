@@ -44,6 +44,10 @@ class CustomField extends Field
 
     public function generateFilter($query = false)
     {
-        $this->eventBeforeFilter($query);
+        if (is_callable($this->filterCallback)) {
+            call_user_func($this->filterCallback, $query, $this);
+            return $query;
+        }
+        return $query;
     }
 }

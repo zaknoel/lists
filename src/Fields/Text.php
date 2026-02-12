@@ -36,6 +36,11 @@ class Text extends Field
 
     public function generateFilter($query = false)
     {
+        if (is_callable($this->filterCallback)) {
+            call_user_func($this->filterCallback, $query, $this);
+            return $query;
+        }
+
         $this->filter_value = [];
         if (request()?->has($this->attribute)) {
             $v = explode('⚬', request()?->get($this->attribute, ''));
@@ -99,7 +104,8 @@ class Text extends Field
         if ($this->multiple) {
             $item->{$this->attribute} = implode('|', $data[$this->attribute] ?? []);
         } else {
-            $default = $this instanceof Relation ? null : ($this instanceof Number ? 0 : '');
+            $def=($this instanceof Number ? 0 : '');
+            $default = $this instanceof Relation ? null : $def;
             $item->{$this->attribute} = $data[$this->attribute]??$default;
         }
 

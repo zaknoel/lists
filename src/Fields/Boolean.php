@@ -37,6 +37,10 @@ class Boolean extends Text
 
     public function generateFilter($query = false)
     {
+        if (is_callable($this->filterCallback)) {
+            call_user_func($this->filterCallback, $query, $this);
+            return $query;
+        }
         $this->filter_value = [];
 
         if (request()?->has($this->attribute)) {
@@ -53,5 +57,6 @@ class Boolean extends Text
                 }
             }
         }
+        return $query;
     }
 }
