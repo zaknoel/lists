@@ -11,6 +11,7 @@ use Illuminate\Validation\ValidationException;
 use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 use Yajra\DataTables\DataTables;
+use Yajra\DataTables\EloquentDataTable;
 use Zak\Lists\Fields\Field;
 
 class ListComponent
@@ -55,6 +56,7 @@ class ListComponent
                 $field->generateFilter($dm);
             });
             $data = DataTables::of($dm);
+            /**@var EloquentDataTable  $data */
             $data->order(function ($query) use ($curSort) {
                 $query->orderBy($curSort[0], $curSort[1]);
             });
@@ -65,8 +67,8 @@ class ListComponent
             if ($component->getActions()) {
                 $columns[] = 'action';
             }
-            if($component->bulkActions){
-                $columns[]='bulk_action_checkbox';
+            if ($component->bulkActions) {
+                $columns[] = 'bulk_action_checkbox';
             }
             $data->only($columns);
             $defaultAction = Arr::first($component->getActions(), function (Action $action) {
@@ -84,15 +86,21 @@ class ListComponent
                 $data->addColumn('action', fn($item) => view($view,
                     ['item' => $item, 'actions' => $component->getFilteredActions($item), 'list' => $list]));
             }
-            if($component->bulkActions){
+            if ($component->bulkActions) {
                 $data->addColumn('bulk_action_checkbox', fn($item) => '<input type="checkbox"
                 x-on:click="$(\'#select-all-bulk\').prop(\'checked\', false);"
                 x-model="bulk_action" name="bulk-action-checkbox" class="bulk-action-checkbox" value="'.$item->id.'"/>');
             }
-            if ($isAjax) {
-                return $data->make(true);
+            try {
+                if ($isAjax) {
+                    return $data->make(true);
+                }
+            }catch (Throwable $e) {
+                info("Zak List Query".$data->getQuery()->toRawSql());
+                if (isReportable($e)) {
+                    report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
+                }
             }
-
             if ($isExcel) {
                 try {
                     return Excel::download(new ListImport($data->toArray(), $fields), $list.'.xlsx');
@@ -217,14 +225,14 @@ class ListComponent
         $component->checkCustomPath('customDetailPage', $item);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
-        $item_id=$item;
+        $item_id = $item;
         $item = $query->where('id', $item)->first();
-        if(!$item){
-            $class=$query->getModel()::class;
-            $query2=$class::query();
-            $item=$query2->withoutGlobalScopes()
+        if (!$item) {
+            $class = $query->getModel()::class;
+            $query2 = $class::query();
+            $item = $query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
-            if($item){
+            if ($item) {
                 setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
@@ -272,14 +280,14 @@ class ListComponent
 
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
-        $item_id=$item;
+        $item_id = $item;
         $item = $query->where('id', $item)->first();
-        if(!$item){
-            $class=$query->getModel()::class;
-            $query2=$class::query();
-            $item=$query2->withoutGlobalScopes()
+        if (!$item) {
+            $class = $query->getModel()::class;
+            $query2 = $class::query();
+            $item = $query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
-            if($item){
+            if ($item) {
                 setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
@@ -306,8 +314,8 @@ class ListComponent
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
                 'list' => $list,
-                'title' => $component->getCustomLabel("edit")??'Редактировать '.$component->getSingleLabel(),
-                'pageTitle' => $component->getCustomLabel("edit")??'Редактировать '.$component->getSingleLabel(),
+                'title' => $component->getCustomLabel("edit") ?? 'Редактировать '.$component->getSingleLabel(),
+                'pageTitle' => $component->getCustomLabel("edit") ?? 'Редактировать '.$component->getSingleLabel(),
                 'frame' => $request->get('frame', 0),
             ]
         );
@@ -371,8 +379,8 @@ class ListComponent
                 'scripts' => $component->scripts(),
                 'fields' => $fields,
                 'list' => $list,
-                'title' => $component->getCustomLabel("add")??'Добавить новый '.$component->getSingleLabel(),
-                'pageTitle' =>$component->getCustomLabel("add")?? 'Новый '.$component->getSingleLabel(),
+                'title' => $component->getCustomLabel("add") ?? 'Добавить новый '.$component->getSingleLabel(),
+                'pageTitle' => $component->getCustomLabel("add") ?? 'Новый '.$component->getSingleLabel(),
                 'frame' => $request->get('frame', 0),
             ]
         );
@@ -449,7 +457,7 @@ class ListComponent
             return back()->with('js_error', 'Действие не найдено!');
         }
         try {
-            $items=$component->getQuery()->whereIn('id',$data['items'])->get();
+            $items = $component->getQuery()->whereIn('id', $data['items'])->get();
             call_user_func($action->callback, $items, $component, $request);
         } catch (Throwable $e) {
             if (isReportable($e)) {
@@ -466,14 +474,14 @@ class ListComponent
         $component = self::getComponent($list);
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
-        $item_id=$item;
+        $item_id = $item;
         $item = $query->where('id', $item)->first();
-        if(!$item){
-            $class=$query->getModel()::class;
-            $query2=$class::query();
-            $item=$query2->withoutGlobalScopes()
+        if (!$item) {
+            $class = $query->getModel()::class;
+            $query2 = $class::query();
+            $item = $query2->withoutGlobalScopes()
                 ->where('id', $item_id)->first();
-            if($item){
+            if ($item) {
                 setJsWarning("Проект переключился на другой, некоторые данные могут быть недоступны.");
                 return \redirect("/");
             }
