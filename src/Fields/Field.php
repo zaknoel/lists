@@ -16,6 +16,8 @@ abstract class Field
 
     public string $name;
 
+    public bool $hide_on_export=false;
+
     public string $attribute;
 
     public $value;
@@ -53,7 +55,8 @@ abstract class Field
         $onSaveForm = null,
         $onFillForm = null,
         $onShowDetail = null,
-        $onShowList = null
+        $onShowList = null,
+        $hideOnExport = false,
     ): static {
         $instance = new static($name, $attribute);
         if ($required) {
@@ -120,6 +123,9 @@ abstract class Field
         }
         if ($onShowList) {
             $instance->onShowList($onShowList);
+        }
+        if($hideOnExport) {
+            $instance->hideOnExport();
         }
 
         return $instance;
@@ -249,4 +255,9 @@ abstract class Field
     }
 
     abstract public function indexHandler();
+
+    public function hideOnExport()
+    {
+        $this->hide_on_export = false;
+    }
 }

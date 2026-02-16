@@ -25,6 +25,13 @@ class ListComponent
         }
         $isExcel = $request->get('excel', 'N') === 'Y';
         $fields = self::filterFields($component, 'show_in_index');
+        if($isExcel){
+            $fields = Arr::where($fields, static function (Field $field) {
+                return !$field->hide_on_export;
+            });
+        }
+
+
         $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
         if ($isAjax || $isExcel) {
             if ($request->has('order')) {
@@ -103,8 +110,10 @@ class ListComponent
             }
             if ($isExcel) {
                 try {
+
                     return Excel::download(new ListImport($data->toArray(), $fields), $list.'.xlsx');
                 } catch (Throwable $e) {
+                    info("Zak List Query".$data->getQuery()->toRawSql());
                     if (isReportable($e)) {
                         report('Zak.Lists.Error:'.$e->getMessage()."\n".$e->getFile()."\n".$e->getLine());
                     }
