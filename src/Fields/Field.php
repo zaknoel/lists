@@ -256,8 +256,9 @@ abstract class Field
 
     abstract public function indexHandler();
 
-    public function hideOnExport()
+    public function hideOnExport(): static
     {
         $this->hide_on_export = false;
+        return $this;
     }
 }
