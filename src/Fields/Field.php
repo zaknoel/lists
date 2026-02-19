@@ -258,7 +258,7 @@ abstract class Field
 
     public function hideOnExport(): static
     {
-        $this->hide_on_export = false;
+        $this->hide_on_export = true;
         return $this;
     }
 }
