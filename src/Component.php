@@ -2,8 +2,8 @@
 
 namespace Zak\Lists;
 
-use Arr;
-use Artisan;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Artisan;
 use Closure;
 use Exception;
 use InvalidArgumentException;

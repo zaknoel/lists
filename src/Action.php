@@ -2,7 +2,7 @@
 
 namespace Zak\Lists;
 
-use Laravel\Nova\Makeable;
+use Zak\Lists\Concerns\Makeable;
 
 class Action
 {

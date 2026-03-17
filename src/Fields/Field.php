@@ -4,7 +4,7 @@ namespace Zak\Lists\Fields;
 
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
-use Laravel\Nova\Makeable;
+use Zak\Lists\Concerns\Makeable;
 use Zak\Lists\Fields\Traits\FieldEvents;
 use Zak\Lists\Fields\Traits\FieldFilter;
 use Zak\Lists\Fields\Traits\FieldProperty;

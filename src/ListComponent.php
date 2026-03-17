@@ -2,7 +2,7 @@
 
 namespace Zak\Lists;
 
-use Artisan;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
