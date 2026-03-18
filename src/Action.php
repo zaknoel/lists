@@ -2,7 +2,9 @@
 
 namespace Zak\Lists;
 
+use Illuminate\Database\Eloquent\Model;
 use Zak\Lists\Concerns\Makeable;
+use Zak\Lists\Contracts\ComponentLoaderContract;
 
 class Action
 {
@@ -39,20 +41,18 @@ class Action
         return $this;
     }
 
-    public function isShown($component, $item)
+    public function isShown(Component $component, Model $item): bool
     {
         if ($this->show === null) {
-            switch ($this->action) {
-                case 'show':
-                    return $component->userCanView($item);
-                case 'edit':
-                    return $component->userCanEdit($item);
-                case 'delete':
-                    return $component->userCanDelete($item);
-            }
+            return match ($this->action) {
+                'show' => (bool) $component->userCanView($item),
+                'edit' => (bool) $component->userCanEdit($item),
+                'delete' => (bool) $component->userCanDelete($item),
+                default => true,
+            };
         }
 
-        return is_callable($this->show) ? call_user_func($this->show, $component, $item) : true;
+        return is_callable($this->show) ? (bool) call_user_func($this->show, $component, $item) : true;
     }
 
     public function default(): static
@@ -83,7 +83,7 @@ class Action
         return $this;
     }
 
-    public function setLinkAction($link): static
+    public function setLinkAction(string $link): static
     {
         $this->type = 'link';
         $this->action = $link;
@@ -91,7 +91,7 @@ class Action
         return $this;
     }
 
-    public function setJsAction($code): static
+    public function setJsAction(string $code): static
     {
         $this->type = 'js';
         $this->action = $code;
@@ -99,32 +99,37 @@ class Action
         return $this;
     }
 
-    public function getLink($item, $list, $name = '', $class = '')
+    public function getLink(Model $item, string $list, string $name = '', string $class = ''): string
     {
-        $c=ListComponent::getComponent($list);
-        $name = $name ?: $this->name;
-        if ($this->action === 'show') {
-            return '<a class="'.$class.'" href="'.$c->getRoute('lists_detail', $list, $item).'">'.$name.'</a>';
-        }
+        /** @var Component $component */
+        $component = app(ComponentLoaderContract::class)->resolve($list);
+        $label = $name ?: $this->name;
 
-        if ($this->action === 'edit') {
-            return '<a class="'.$class.'" href="'.$c->getRoute('lists_edit', $list, $item).'">'.$name.'</a>';
-        }
-        if ($this->action === 'delete') {
-            return ' <form onsubmit="return confirm(\'Вы уверены, что хотите удалить этот элемент?\')" method="post"
-                      action="'.$c->getRoute('lists_delete', $list, $item).'?'.request()->getQueryString().'">
-        <input type="hidden" name="_token" value=" '.csrf_token().'" />
-                    <a class="dropdown-item" onclick="$(this).parent().submit()">'.$name.'</a>
-                </form>';
-        }
-        if ($this->type === 'link') {
-            return '<a class="'.$class.'" href="'.$this->action.'">'.$name.'</a>';
-        }
-        if ($this->type === 'js') {
-            return '<a class="'.$class.'" href="javascript:void(0)" onclick="'.str_replace('item_id', $item->id,
-                $this->action).'">'.$name.'</a>';
-        }
+        return match (true) {
+            $this->action === 'show' => '<a class="'.$class.'" href="'.$component->getRoute('lists_detail', $list, $item).'">'.$label.'</a>',
+            $this->action === 'edit' => '<a class="'.$class.'" href="'.$component->getRoute('lists_edit', $list, $item).'">'.$label.'</a>',
+            $this->action === 'delete' => $this->renderDeleteForm($component, $item, $list, $label),
+            $this->type === 'link' => '<a class="'.$class.'" href="'.$this->action.'">'.$label.'</a>',
+            $this->type === 'js' => '<a class="'.$class.'" href="javascript:void(0)" onclick="'.str_replace('item_id', (string) $item->id, $this->action).'">'.$label.'</a>',
+            default => $label,
+        };
+    }
 
-        return $name;
+    /**
+     * Рендерит форму для удаления с подтверждением.
+     */
+    private function renderDeleteForm(Component $component, Model $item, string $list, string $label): string
+    {
+        $action = $component->getRoute('lists_delete', $list, $item);
+        $token = csrf_token();
+        $confirm = __('lists.messages.delete_confirm');
+
+        return <<<HTML
+<form onsubmit="return confirm('{$confirm}')" method="post" action="{$action}">
+    <input type="hidden" name="_token" value="{$token}" />
+    <input type="hidden" name="_method" value="DELETE" />
+    <a class="dropdown-item" onclick="$(this).parent().submit()">{$label}</a>
+</form>
+HTML;
     }
 }

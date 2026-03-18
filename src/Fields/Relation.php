@@ -2,7 +2,7 @@
 
 namespace Zak\Lists\Fields;
 
-use Zak\Lists\ListComponent;
+use Zak\Lists\Contracts\ComponentLoaderContract;
 
 class Relation extends Select
 {
@@ -33,7 +33,6 @@ class Relation extends Select
 
         return $this;
     }
-
 
     public function model($model): static
     {
@@ -74,7 +73,7 @@ class Relation extends Select
         if ($this->selected) {
             $query = $this->model::whereIn('id', $this->selected);
             foreach ($this->filter as $filter) {
-                if (!isset($filter[1])) {
+                if (! isset($filter[1])) {
                     $query->{$filter[0]}();
                 } elseif ($filter[1] === 'in') {
                     $query->whereIn($filter[0], $filter[2]);
@@ -100,9 +99,9 @@ class Relation extends Select
             if ($this->list && auth()->user()->can('viewAny', $this->model)) {
                 $item = $this->item->{$attr};
                 if ($item) {
-                    $c = ListComponent::getComponent($this->list);
+                    $c = app(ComponentLoaderContract::class)->resolve($this->list);
                     $this->value = "<a class='text-secondary' href='".$c->getRoute('lists_detail', $this->list,
-                            $item)."' target='_blank'>".$item->{$this->field}.'</a>';
+                        $item)."' target='_blank'>".$item->{$this->field}.'</a>';
                 } else {
                     $this->value = $this->item->{$attr}?->{$this->field};
                 }

@@ -6,6 +6,16 @@ use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Zak\Lists\Commands\ComponentCommand;
+use Zak\Lists\Commands\MakeFieldCommand;
+use Zak\Lists\Contracts\AuthorizationContract;
+use Zak\Lists\Contracts\ComponentLoaderContract;
+use Zak\Lists\Contracts\FieldServiceContract;
+use Zak\Lists\Contracts\QueryContract;
+use Zak\Lists\Services\AuthorizationService;
+use Zak\Lists\Services\ComponentLoader;
+use Zak\Lists\Services\ExportService;
+use Zak\Lists\Services\FieldService;
+use Zak\Lists\Services\QueryService;
 
 class ListsServiceProvider extends PackageServiceProvider
 {
@@ -21,7 +31,8 @@ class ListsServiceProvider extends PackageServiceProvider
             ->hasConfigFile()
             ->hasViews()
             ->hasAssets()
-            ->hasCommand(ComponentCommand::class)
+            ->hasTranslations()
+            ->hasCommands(ComponentCommand::class, MakeFieldCommand::class)
             ->hasMigration('create_option_table')
             ->publishesServiceProvider('ListsServiceProvider')
             ->hasRoute('lists')
@@ -30,10 +41,23 @@ class ListsServiceProvider extends PackageServiceProvider
                     ->publish('views')
                     ->publishConfigFile()
                     ->publishAssets()
-                    ->publishMigrations();
-                // ->copyAndRegisterServiceProviderInApp();
+                    ->publishMigrations()
+                    ->publish('translations');
             });
-        // ->hasMigration('create_lists_table')
-        // ->hasCommand(ListsCommand::class);
+    }
+
+    public function packageRegistered(): void
+    {
+        // Singleton для кэширования загруженных компонентов в рамках одного запроса
+        $this->app->singleton(ComponentLoaderContract::class, ComponentLoader::class);
+
+        // Сервисы регистрируем как синглтоны
+        $this->app->singleton(AuthorizationContract::class, AuthorizationService::class);
+        $this->app->singleton(QueryContract::class, QueryService::class);
+        $this->app->singleton(FieldServiceContract::class, FieldService::class);
+        $this->app->singleton(ExportService::class, ExportService::class);
+
+        // Алиасы для удобного использования через app()
+        $this->app->alias(ComponentLoaderContract::class, 'lists.loader');
     }
 }

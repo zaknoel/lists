@@ -2,10 +2,11 @@
 
 namespace Zak\Lists;
 
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\Artisan;
 use Closure;
 use Exception;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 use Zak\Lists\Fields\BelongToMany;
 use Zak\Lists\Fields\Field;
@@ -54,68 +55,115 @@ class Component
         public array $customLabels = [],
         public array $bulkActions = [],
     ) {
-        // init component
-        $this->className = class_basename($this->model);
-        $user = auth()->user();
-        $this->checkPolice();
-        $this->canAdd = $this->canAdd ?? fn() => $user->can('add', $this->model);
-        $this->canEdit = $this->canEdit ?? static fn($item) => $user->can('edit', $item);
-        $this->canDelete = $this->canDelete ?? static fn($item) => $user->can('delete', $item);
-        $this->canView = $this->canView ?? static fn($item) => $user->can('view', $item);
-        $this->canViewAny = $this->canViewAny ?? fn() => $user->can('viewAny', $this->model);
-
-        if (!$this->userCanViewAny()) {
-            abort(403);
+        if (! $this->model) {
+            throw new InvalidArgumentException('Model not set!');
         }
-        if (is_null($this->actions)) {
+
+        $this->className = class_basename($this->model);
+
+        // Дефолтные замыкания прав — используют политики Laravel
+        $user = auth()->user();
+
+        if ($user) {
+            $this->canAdd = $this->canAdd ?? fn () => $user->can('add', $this->model);
+            $this->canEdit = $this->canEdit ?? static fn ($item) => $user->can('edit', $item);
+            $this->canDelete = $this->canDelete ?? static fn ($item) => $user->can('delete', $item);
+            $this->canView = $this->canView ?? static fn ($item) => $user->can('view', $item);
+            $this->canViewAny = $this->canViewAny ?? fn () => $user->can('viewAny', $this->model);
+        } else {
+            // Без аутентифицированного пользователя — запрещаем всё
+            $this->canAdd = $this->canAdd ?? fn () => false;
+            $this->canEdit = $this->canEdit ?? static fn ($item) => false;
+            $this->canDelete = $this->canDelete ?? static fn ($item) => false;
+            $this->canView = $this->canView ?? static fn ($item) => false;
+            $this->canViewAny = $this->canViewAny ?? fn () => false;
+        }
+
+        if ($this->actions === null) {
             $this->actions = array_filter([
                 Action::make('Просмотр')->showAction()->default(),
                 Action::make('Редактировать')->editAction(),
                 Action::make('Удалить')->deleteAction(),
             ]);
         }
-        if (!$this->model) {
-            throw new InvalidArgumentException('Model not set!');
-        }
-        $this->grid_id = $this->model;
-        $this->options = UserOption::firstOrCreate(
-            [
-                'user_id' => auth()->user()->id,
-                'name' => $this->grid_id,
-            ],
-            [
-                'user_id' => auth()->user()->id,
-                'name' => $this->grid_id,
-                'value' => [
-                    'columns' => [],
-                    'sort' => [],
-                    'filters' => [],
-                    'cur_sort' => [],
-                ],
-            ]
 
-        );
-        $this->fields = array_filter($this->fields, static function ($field) {
-            return $field instanceof Field;
-        });
+        $this->grid_id = $this->model;
+
+        if ($user?->id) {
+            $this->options = UserOption::firstOrCreate(
+                ['user_id' => $user->id, 'name' => $this->grid_id],
+                [
+                    'user_id' => $user->id,
+                    'name' => $this->grid_id,
+                    'value' => ['columns' => [], 'sort' => [], 'filters' => [], 'curSort' => []],
+                ]
+            );
+        } else {
+            // Заглушка без обращения к БД — для тестов/CLI
+            $this->options = new UserOption([
+                'user_id' => 0,
+                'name' => $this->grid_id,
+                'value' => ['columns' => [], 'sort' => [], 'filters' => [], 'curSort' => []],
+            ]);
+        }
+
+        $this->fields = array_values(array_filter(
+            $this->fields,
+            static fn ($field) => $field instanceof Field
+        ));
     }
 
-    private function checkPolice(): void
+    /**
+     * Генерирует файл политики для модели, если он ещё не существует.
+     * Вызывается явно (например, из Artisan-команды), не из конструктора.
+     */
+    public function ensurePolicyExists(): void
     {
         $path = app_path('Policies/'.$this->className.'Policy.php');
-        if (!file_exists($path)) {
-            Artisan::call('make:policy', ['name' => $this->className.'Policy', '-m' => $this->model]);
-            $policyFilePath = app_path('Policies/'.$this->className.'Policy.php');
-            $policyContent = file_get_contents($policyFilePath);
-            // replace all false to true
-            $policyContent = str_replace('return false;', 'return true;', $policyContent);
-            file_put_contents($policyFilePath, $policyContent);
+
+        if (file_exists($path)) {
+            return;
         }
+
+        Artisan::call('make:policy', ['name' => $this->className.'Policy', '-m' => $this->model]);
+
+        $content = file_get_contents($path);
+        file_put_contents($path, str_replace('return false;', 'return true;', $content));
     }
 
-    public function userCanViewAny()
+    public function userCanViewAny(): bool
     {
-        return $this->canViewAny && is_callable($this->canViewAny) ? call_user_func($this->canViewAny) : $this->canViewAny;
+        return (bool) (is_callable($this->canViewAny)
+            ? call_user_func($this->canViewAny)
+            : $this->canViewAny);
+    }
+
+    public function userCanView(mixed $item): bool
+    {
+        return (bool) (is_callable($this->canView)
+            ? call_user_func($this->canView, $item)
+            : $this->canView);
+    }
+
+    public function userCanAdd(): bool
+    {
+        return (bool) (is_callable($this->canAdd)
+            ? call_user_func($this->canAdd)
+            : $this->canAdd);
+    }
+
+    public function userCanEdit(mixed $item): bool
+    {
+        return (bool) (is_callable($this->canEdit)
+            ? call_user_func($this->canEdit, $item)
+            : $this->canEdit);
+    }
+
+    public function userCanDelete(mixed $item): bool
+    {
+        return (bool) (is_callable($this->canDelete)
+            ? call_user_func($this->canDelete, $item)
+            : $this->canDelete);
     }
 
     public function getModel(): string
@@ -128,10 +176,8 @@ class Component
         return $this->label;
     }
 
-    public function getCustomLabel($key)
+    public function getCustomLabel(string $key): ?string
     {
-
-
         return $this->customLabels[$key] ?? null;
     }
 
@@ -142,12 +188,12 @@ class Component
 
     public function getActions(): array
     {
-        return $this->actions;
+        return $this->actions ?? [];
     }
 
     public function getPages(): array
     {
-        return $this->pages;
+        return $this->pages ?? [];
     }
 
     public function getCustomScript(): string
@@ -155,40 +201,57 @@ class Component
         return $this->customScript;
     }
 
-    public function eventOnIndexQuery($query): mixed
+    public function getFields(): array
     {
-        $this->eventOnQuery($query);
-        $relations = [];
-        foreach ($this->getFields() as $field) {
-            if (
-                $field->show_in_index
-                && (!$this->options->value['columns'] || in_array($field->attribute, $this->options->value['columns'],
-                        false))
-            ) {
-                if ($field instanceof Relation) {
-                    $rname = $field->relationName ?: str_replace('_id', '', $field->attribute);
-                    if (method_exists($this->model, $rname)) {
-                        $relations[] = $rname;
-                    } else {
-                        report(new Exception('Relation not found: '.$this->model.'->'.$rname));
-                    }
-                } elseif ($field instanceof BelongToMany) {
-                    $relations[] = $field->attribute;
-                }
-            }
-        }
-        if ($relations) {
-            $query->with($relations);
-        }
-
-        if ($this->OnIndexQuery && is_callable($this->OnIndexQuery)) {
-            return call_user_func($this->OnIndexQuery, $query);
-        }
-
-        return $query;
+        return $this->fields;
     }
 
-    public function eventOnQuery($query): mixed
+    public function setFields(array $fields): static
+    {
+        $this->fields = $fields;
+
+        return $this;
+    }
+
+    public function getFilteredFields(Closure $callback): array
+    {
+        return array_values(array_filter($this->fields, $callback));
+    }
+
+    public function getQuery(): Builder
+    {
+        return $this->model::query();
+    }
+
+    public function getFilteredActions(mixed $item): array
+    {
+        return array_values(array_filter(
+            $this->actions ?? [],
+            fn (Action $action) => $action->isShown($this, $item)
+        ));
+    }
+
+    /**
+     * Определяет номер начальной колонки данных (со смещением на action/checkbox колонки).
+     */
+    public function getSortInt(): int
+    {
+        $int = 0;
+
+        if ($this->getActions()) {
+            $int++;
+        }
+
+        if ($this->bulkActions) {
+            $int++;
+        }
+
+        return $int;
+    }
+
+    // ── Events ────────────────────────────────────────────────────────────────
+
+    public function eventOnQuery(mixed $query): mixed
     {
         if ($this->OnQuery && is_callable($this->OnQuery)) {
             return call_user_func($this->OnQuery, $query);
@@ -197,14 +260,23 @@ class Component
         return $query;
     }
 
-    public function getFields(): array
-    {
-        return $this->fields;
-    }
-
-    public function eventOnDetailQuery($query): mixed
+    public function eventOnIndexQuery(mixed $query): mixed
     {
         $this->eventOnQuery($query);
+
+        $this->applyEagerLoading($query);
+
+        if ($this->OnIndexQuery && is_callable($this->OnIndexQuery)) {
+            return call_user_func($this->OnIndexQuery, $query);
+        }
+
+        return $query;
+    }
+
+    public function eventOnDetailQuery(mixed $query): mixed
+    {
+        $this->eventOnQuery($query);
+
         if ($this->OnDetailQuery && is_callable($this->OnDetailQuery)) {
             return call_user_func($this->OnDetailQuery, $query);
         }
@@ -212,9 +284,10 @@ class Component
         return $query;
     }
 
-    public function eventOnEditQuery($query): mixed
+    public function eventOnEditQuery(mixed $query): mixed
     {
         $this->eventOnQuery($query);
+
         if ($this->OnEditQuery && is_callable($this->OnEditQuery)) {
             return call_user_func($this->OnEditQuery, $query);
         }
@@ -222,7 +295,7 @@ class Component
         return $query;
     }
 
-    public function eventOnBeforeSave($item): mixed
+    public function eventOnBeforeSave(mixed $item): mixed
     {
         if ($this->OnBeforeSave && is_callable($this->OnBeforeSave)) {
             return call_user_func($this->OnBeforeSave, $item);
@@ -231,7 +304,7 @@ class Component
         return $item;
     }
 
-    public function eventOnAfterSave($item): mixed
+    public function eventOnAfterSave(mixed $item): mixed
     {
         if ($this->OnAfterSave && is_callable($this->OnAfterSave)) {
             return call_user_func($this->OnAfterSave, $item);
@@ -240,7 +313,7 @@ class Component
         return $item;
     }
 
-    public function eventOnBeforeDelete($item): mixed
+    public function eventOnBeforeDelete(mixed $item): mixed
     {
         if ($this->OnBeforeDelete && is_callable($this->OnBeforeDelete)) {
             return call_user_func($this->OnBeforeDelete, $item);
@@ -249,7 +322,7 @@ class Component
         return $item;
     }
 
-    public function eventOnAfterDelete($item): mixed
+    public function eventOnAfterDelete(mixed $item): mixed
     {
         if ($this->OnAfterDelete && is_callable($this->OnAfterDelete)) {
             return call_user_func($this->OnAfterDelete, $item);
@@ -258,35 +331,57 @@ class Component
         return $item;
     }
 
-    public function userCanView($item)
+    // ── Routing ───────────────────────────────────────────────────────────────
+
+    public function checkCustomPath(string $property, mixed $context = null): void
     {
-        return $this->canView && is_callable($this->canView) ? call_user_func($this->canView,
-            $item) : $this->canView;
+        if ($this->{$property} && is_callable($this->{$property})) {
+            $redirectTo = call_user_func($this->{$property}, $context);
+
+            if ($redirectTo) {
+                header('Location: '.$redirectTo);
+                exit;
+            }
+        }
     }
 
-    public function userCanAdd()
+    public function getRoute(string $route, string $list, mixed $context = null): string
     {
-        return $this->canAdd && is_callable($this->canAdd) ? call_user_func($this->canAdd) : $this->canAdd;
+        $customProperties = [
+            'lists_add' => 'customAddPage',
+            'add_save' => 'customAddPage',
+            'lists_edit' => 'customEditPage',
+            'edit_save' => 'customEditPage',
+            'lists_detail' => 'customDetailPage',
+            'lists_delete' => 'customDeletePage',
+        ];
+
+        $property = $customProperties[$route] ?? $route;
+
+        if (isset($this->{$property}) && is_callable($this->{$property})) {
+            $redirectTo = call_user_func($this->{$property}, $context);
+
+            if ($redirectTo) {
+                return $redirectTo;
+            }
+        }
+
+        return route($route, [
+            'list' => $list,
+            'item' => $context?->id,
+        ]);
     }
 
-    public function userCanEdit($item)
-    {
-        return $this->canEdit && is_callable($this->canEdit) ? call_user_func($this->canEdit,
-            $item) : $this->canEdit;
-    }
+    // ── Scripts ───────────────────────────────────────────────────────────────
 
-    public function userCanDelete($item)
-    {
-        return $this->canDelete && is_callable($this->canDelete) ? call_user_func($this->canDelete,
-            $item) : $this->canDelete;
-    }
-
+    /**
+     * Возвращает HTML-скрипты, нужные для полей текущего компонента.
+     */
     public function scripts(): string
     {
         $scripts = [
             'location' => [
-                '    <script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=f583857c-aaf5-454e-943b-d94c3e908c3f"
-            type="text/javascript"></script>',
+                '<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=f583857c-aaf5-454e-943b-d94c3e908c3f" type="text/javascript"></script>',
             ],
             'checkbox' => [
                 '<link rel="stylesheet" href="/vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
@@ -295,85 +390,52 @@ class Component
         ];
 
         $result = [];
-        foreach ($scripts as $k => $v) {
-            if (Arr::where($this->fields, fn(Field $item) => $item->componentName() === $k)) {
-                $result[] = implode(PHP_EOL, $v);
+
+        foreach ($scripts as $key => $tags) {
+            if (Arr::where($this->fields, fn (Field $f) => $f->componentName() === $key)) {
+                $result[] = implode(PHP_EOL, $tags);
             }
         }
+
         $result[] = $this->customScript;
 
         return implode(PHP_EOL, $result);
     }
 
-    public function getFilteredFields(Closure $callback): array
-    {
-        return array_filter($this->fields, $callback);
-    }
+    // ── Private helpers ───────────────────────────────────────────────────────
 
-    public function setFields($fields): static
+    /**
+     * Автоматически eager-load связи для видимых полей индекса.
+     */
+    private function applyEagerLoading(mixed $query): void
     {
-        $this->fields = $fields;
+        $visibleColumns = $this->options->value['columns'] ?? [];
+        $relations = [];
 
-        return $this;
-    }
+        foreach ($this->fields as $field) {
+            if (! $field->show_in_index) {
+                continue;
+            }
 
-    public function getQuery()
-    {
-        return $this->model::query();
-    }
+            if ($visibleColumns && ! in_array($field->attribute, $visibleColumns, false)) {
+                continue;
+            }
 
-    public function getFilteredActions($item)
-    {
-        $actions = [];
-        foreach ($this->actions as $action) {
-            if ($action->isShown($this, $item)) {
-                $actions[] = $action;
+            if ($field instanceof Relation) {
+                $name = $field->relationName ?: str_replace('_id', '', $field->attribute);
+
+                if (method_exists($this->model, $name)) {
+                    $relations[] = $name;
+                } else {
+                    report(new Exception('Relation not found: '.$this->model.'->'.$name));
+                }
+            } elseif ($field instanceof BelongToMany) {
+                $relations[] = $field->attribute;
             }
         }
 
-        return $actions;
-
-    }
-
-    public function checkCustomPath(string $string, $context = null): void
-    {
-        if ($this->{$string} && is_callable($this->{$string})) {
-            $redirectTo = call_user_func($this->{$string}, $context);
-            if ($redirectTo) {
-                header('Location: '.$redirectTo);
-                exit;
-            }
+        if ($relations) {
+            $query->with($relations);
         }
-    }
-
-    public function getRoute($route, $list, $context = null): string
-    {
-        $routeAList = [
-            'lists_add' => 'customAddPage',
-            'add_save' => 'customAddPage',
-            'lists_edit' => 'customEditPage',
-            'edit_save' => 'customEditPage',
-            'lists_detail' => 'customDetailPage',
-            'lists_delete' => 'customDeletePage',
-        ];
-        $string = $routeAList[$route] ?? $route;
-        if ($this->{$string} && is_callable($this->{$string})) {
-            $redirectTo = call_user_func($this->{$string}, $context);
-            if ($redirectTo) {
-                return $redirectTo;
-            }
-        }
-        return route($route, ['list' => $list, 'item' => $context ? $context->id : null]);
-    }
-    public function getSortInt()
-    {
-        $int=0;
-        if($this->getActions()) {
-            $int++;
-        }
-        if($this->bulkActions) {
-            $int++;
-        }
-        return $int;
     }
 }

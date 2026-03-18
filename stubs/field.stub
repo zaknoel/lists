@@ -1,0 +1,39 @@
+<?php
+
+namespace {{ namespace }};
+
+use Zak\Lists\Fields\Field;
+
+class {{ class }} extends Field
+{
+    public function type(): string
+    {
+        return 'text';
+    }
+
+    public function componentName(): string
+    {
+        return 'text';
+    }
+
+    public function handleFill(): void
+    {
+        $this->value = $this->item->{$this->attribute};
+    }
+
+    public function saveHandler($item, $data): void
+    {
+        $item->{$this->attribute} = $data[$this->attribute] ?? null;
+    }
+
+    public function detailHandler(): void
+    {
+        $this->value = $this->item->{$this->attribute};
+    }
+
+    public function indexHandler(): void
+    {
+        $this->value = $this->item->{$this->attribute};
+    }
+}
+
