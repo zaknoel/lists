@@ -36,7 +36,7 @@ class Image extends File
         return 'image';
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}) {
             $this->value = "<a style='min-width:100px; display:block' target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>
@@ -48,7 +48,7 @@ class Image extends File
 
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->indexHandler();
     }

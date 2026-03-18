@@ -86,12 +86,12 @@ class Relation extends Select
         }
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->indexHandler();
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         $value = $this->item->{$this->attribute};
         if ($value) {

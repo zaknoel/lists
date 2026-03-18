@@ -26,12 +26,12 @@ class ID extends Text
         return $item;
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->value = $this->item->{$this->attribute};
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         $this->value = $this->item->{$this->attribute};
     }

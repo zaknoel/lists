@@ -5,24 +5,31 @@ namespace Zak\Lists\Fields;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Zak\Lists\Concerns\Makeable;
+use Zak\Lists\Fields\Casts\FieldCast;
+use Zak\Lists\Fields\Contracts\Displayable;
+use Zak\Lists\Fields\Contracts\Filterable;
+use Zak\Lists\Fields\Contracts\Validatable;
 use Zak\Lists\Fields\Traits\FieldEvents;
 use Zak\Lists\Fields\Traits\FieldFilter;
 use Zak\Lists\Fields\Traits\FieldProperty;
 
-abstract class Field
+abstract class Field implements Displayable, Filterable, Validatable
 {
     use FieldEvents, FieldFilter, FieldProperty;
     use Makeable;
 
+    /** @var FieldCast|null Cast для преобразования значений этого поля */
+    protected ?FieldCast $cast = null;
+
     public string $name;
 
-    public bool $hide_on_export=false;
+    public bool $hide_on_export = false;
 
     public string $attribute;
 
     public $value;
 
-    protected string $type='';
+    protected string $type = '';
 
     protected string $component_name;
 
@@ -124,11 +131,29 @@ abstract class Field
         if ($onShowList) {
             $instance->onShowList($onShowList);
         }
-        if($hideOnExport) {
+        if ($hideOnExport) {
             $instance->hideOnExport();
         }
 
         return $instance;
+    }
+
+    /**
+     * Задаёт cast для трансформации значений поля при чтении и записи.
+     */
+    public function withCast(FieldCast $cast): static
+    {
+        $this->cast = $cast;
+
+        return $this;
+    }
+
+    /**
+     * Возвращает текущий cast или null.
+     */
+    public function getCast(): ?FieldCast
+    {
+        return $this->cast;
     }
 
     public function addRule($rule, $message): static
@@ -158,7 +183,7 @@ abstract class Field
 
     abstract public function handleFill();
 
-    public function show()
+    public function show(): mixed
     {
         if ($this->view) {
             return view($this->view, ['field' => $this]);
@@ -232,7 +257,7 @@ abstract class Field
 
     abstract public function saveHandler($item, $data);
 
-    public function showDetail()
+    public function showDetail(): mixed
     {
         $this->detailHandler();
         $this->eventOnShowDetail();
@@ -240,9 +265,9 @@ abstract class Field
         return $this->value;
     }
 
-    abstract public function detailHandler();
+    abstract public function detailHandler(): void;
 
-    public function showIndex($item, $list, $action = null)
+    public function showIndex(mixed $item, string $list, mixed $action = null): mixed
     {
         $this->indexHandler();
         $this->eventOnShowList();
@@ -254,11 +279,12 @@ abstract class Field
         return $this->value;
     }
 
-    abstract public function indexHandler();
+    abstract public function indexHandler(): void;
 
     public function hideOnExport(): static
     {
         $this->hide_on_export = true;
+
         return $this;
     }
 }

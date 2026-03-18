@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
 use Zak\Lists\Fields\BelongToMany;
 use Zak\Lists\Fields\Field;
+use Zak\Lists\Fields\FieldCollection;
 use Zak\Lists\Fields\Relation;
 use Zak\Lists\Models\UserOption;
 
@@ -204,6 +205,14 @@ class Component
     public function getFields(): array
     {
         return $this->fields;
+    }
+
+    /**
+     * Возвращает поля как типизированную коллекцию с удобными методами фильтрации.
+     */
+    public function fieldCollection(): FieldCollection
+    {
+        return FieldCollection::fromArray($this->fields);
     }
 
     public function setFields(array $fields): static

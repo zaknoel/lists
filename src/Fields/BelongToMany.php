@@ -85,7 +85,7 @@ class BelongToMany extends Select
 
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}->count()) {
             if ($this->list && auth()->user()->can('viewAny', $this->model)) {
@@ -96,10 +96,15 @@ class BelongToMany extends Select
                             $item)."' target='_blank' class='text-secondary'>".$item->{$this->field}.'</a>';
                     })
                     ->pluck($this->field.'_new')->toArray());
+
+                return;
             }
 
-            return $this->value = implode(', ', $this->item->{$this->attribute}->pluck($this->field)->toArray());
+            $this->value = implode(', ', $this->item->{$this->attribute}->pluck($this->field)->toArray());
+
+            return;
         }
+
         $this->value = '';
 
     }

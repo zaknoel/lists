@@ -15,7 +15,7 @@ trait FieldFilter
         return $this;
     }
 
-    public function filterContent()
+    public function filterContent(): mixed
     {
         if ($this->filter_view) {
             return view($this->filter_view, ['field' => $this]);
@@ -32,11 +32,11 @@ trait FieldFilter
         return view($view, ['field' => $this]);
     }
 
-    abstract public function generateFilter($query = false);
+    abstract public function generateFilter(mixed $query = false): mixed;
 
-    abstract public function filteredValue();
+    abstract public function filteredValue(): string;
 
-    public function showFilter()
+    public function showFilter(): mixed
     {
         return view('lists::filter.main', ['field' => $this]);
     }

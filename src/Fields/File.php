@@ -19,10 +19,6 @@ class File extends Text
         'max:60048' => 'The file size must not exceed 60MB.',
     ];
 
-
-
-
-
     public function disk($disk): static
     {
         $this->disk = $disk;
@@ -113,7 +109,7 @@ class File extends Text
         return $item;
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}) {
             $this->value = "<a target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>Скачать файл</a>";
@@ -123,7 +119,7 @@ class File extends Text
 
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->indexHandler();
     }
