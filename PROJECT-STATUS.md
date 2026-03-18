@@ -1,4 +1,80 @@
-# 📋 Final Project Status: STEP 3 Complete
+# 📋 Project Status: STEP 4 Complete
+
+**Project**: Zak/Lists v2.0 Professional Refactoring  
+**Current Step**: 4 of 11  
+**Status**: ✅ STEP 4 COMPLETE  
+
+---
+
+## ✅ COMPLETED STEPS
+
+| Step | Title | Tests | Status |
+|------|-------|-------|--------|
+| 1 | Initialization & Architecture Review | — | ✅ Complete |
+| 2 | Service Layer Implementation | 47 tests | ✅ Complete |
+| 3 | Field System Refactoring | 164 tests | ✅ Complete |
+| 4 | Form Requests & Validation | 199 tests | ✅ Complete |
+
+---
+
+## 📁 STEP 4 DELIVERABLES
+
+### Form Request Classes
+- `src/Requests/BaseListRequest.php` — abstract base, resolves component via ComponentLoader
+- `src/Requests/ListStoreRequest.php` — authorize() + rules() from show_on_add fields
+- `src/Requests/ListUpdateRequest.php` — authorize() + rules() with unique-ignore for current item
+- `src/Requests/ListDestroyRequest.php` — authorize() only, empty rules
+- `src/Requests/ListOptionsRequest.php` — validates columns/sort/filters
+- `src/Requests/ListBulkActionRequest.php` — validates action + items array
+
+### Updated Files
+- `src/Http/Controllers/ListController.php` — typed FormRequests for store/update/destroy/options/bulk
+- `src/Services/FieldService.php` — uses `$request->validated()` for FormRequest, fallback validate() for plain Request
+- `src/Actions/SaveOptionsAction.php` — uses validated() when FormRequest available
+- `src/Actions/BulkActionRunner.php` — uses validated() when FormRequest available
+
+### Tests (+35 new)
+- `tests/Unit/Requests/ListStoreRequestTest.php` — authorize, rules, messages, HTTP integration
+- `tests/Unit/Requests/ListUpdateRequestTest.php` — authorize, unique-ignore rules, HTTP integration
+- `tests/Unit/Requests/ListDestroyRequestTest.php` — delete, 404, 403, method spoofing
+- `tests/Unit/Requests/ListOptionsRequestTest.php` — rules, HTTP integration
+- `tests/Unit/Requests/ListBulkActionRequestTest.php` — rules, HTTP integration
+
+---
+
+## 📊 TEST PROGRESS
+
+```
+STEP 2:     47 tests
+STEP 3:    164 tests  (+117)
+STEP 4:    199 tests  (+35)
+─────────────────────────────────────────
+TOTAL:     199 tests, 316 assertions
+```
+
+---
+
+## 📈 TIMELINE STATUS
+
+```
+STEP 1:     ✅ COMPLETE
+STEP 2:     ✅ COMPLETE
+STEP 3:     ✅ COMPLETE
+STEP 4:     ✅ COMPLETE
+STEP 5:     ⏳ READY (API Resources & Response Formatting)
+STEPS 6-11: ⏳ PENDING
+```
+
+---
+
+## 🚀 READY FOR STEP 5?
+
+**STEP 5: API Resources & Response Formatting** — 6-8 hours.
+
+This step will:
+- Create ListItemResource, ListCollectionResource, ListFieldResource
+- Consistent JSON response structure for API consumers
+- 20+ resource tests
 
 **Project**: Zak/Lists v2.0 Professional Refactoring  
 **Current Step**: 3 of 11  
