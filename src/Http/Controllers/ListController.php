@@ -13,6 +13,11 @@ use Zak\Lists\Actions\SaveOptionsAction;
 use Zak\Lists\Actions\ShowAction;
 use Zak\Lists\Actions\StoreAction;
 use Zak\Lists\Actions\UpdateAction;
+use Zak\Lists\Requests\ListBulkActionRequest;
+use Zak\Lists\Requests\ListDestroyRequest;
+use Zak\Lists\Requests\ListOptionsRequest;
+use Zak\Lists\Requests\ListStoreRequest;
+use Zak\Lists\Requests\ListUpdateRequest;
 
 /**
  * Тонкий контроллер: принимает HTTP-запрос и делегирует его соответствующему Action-классу.
@@ -35,7 +40,7 @@ class ListController
         return $action->handle($request, $list);
     }
 
-    public function store(Request $request, string $list, StoreAction $action): mixed
+    public function store(ListStoreRequest $request, string $list, StoreAction $action): mixed
     {
         return $action->handle($request, $list);
     }
@@ -45,22 +50,22 @@ class ListController
         return $action->handle($request, $list, $item);
     }
 
-    public function update(Request $request, string $list, int $item, UpdateAction $action): mixed
+    public function update(ListUpdateRequest $request, string $list, int $item, UpdateAction $action): mixed
     {
         return $action->handle($request, $list, $item);
     }
 
-    public function destroy(Request $request, string $list, int $item, DestroyAction $action): mixed
+    public function destroy(ListDestroyRequest $request, string $list, int $item, DestroyAction $action): mixed
     {
         return $action->handle($request, $list, $item);
     }
 
-    public function options(Request $request, string $list, SaveOptionsAction $action): mixed
+    public function options(ListOptionsRequest $request, string $list, SaveOptionsAction $action): mixed
     {
         return $action->handle($request, $list);
     }
 
-    public function bulkAction(Request $request, string $list, BulkActionRunner $action): mixed
+    public function bulkAction(ListBulkActionRequest $request, string $list, BulkActionRunner $action): mixed
     {
         return $action->handle($request, $list);
     }

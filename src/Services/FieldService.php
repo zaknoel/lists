@@ -3,6 +3,7 @@
 namespace Zak\Lists\Services;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 use Throwable;
@@ -16,10 +17,15 @@ class FieldService implements FieldServiceContract
 {
     public function saveFields(?Model $item, array $fields, Request $request, Component $component): Model
     {
-        $rules = $this->buildValidationRules($fields, $item);
-        $messages = $this->buildValidationMessages($fields);
-
-        $data = $request->validate($rules, $messages);
+        // FormRequest уже провалидировал данные — используем validated().
+        // Для обычного Request — валидируем вручную (backward-compatible для unit-тестов).
+        if ($request instanceof FormRequest) {
+            $data = $request->validated();
+        } else {
+            $rules = $this->buildValidationRules($fields, $item);
+            $messages = $this->buildValidationMessages($fields);
+            $data = $request->validate($rules, $messages);
+        }
 
         $model = $item ?? new ($component->getModel());
 

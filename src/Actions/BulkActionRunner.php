@@ -2,6 +2,7 @@
 
 namespace Zak\Lists\Actions;
 
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -25,11 +26,15 @@ class BulkActionRunner
         $component = $this->loader->resolve($list);
         $this->authService->ensureCanViewAny($component);
 
-        $data = $request->validate([
-            'action' => ['required', 'string'],
-            'items' => ['required', 'array'],
-            'items.*' => ['integer'],
-        ]);
+        // Данные уже провалидированы FormRequest (ListBulkActionRequest).
+        // Поддерживаем fallback для прямых вызовов без FormRequest.
+        $data = $request instanceof FormRequest
+            ? $request->validated()
+            : $request->validate([
+                'action' => ['required', 'string'],
+                'items' => ['required', 'array'],
+                'items.*' => ['integer'],
+            ]);
 
         /** @var BulkAction|null $action */
         $action = Arr::first(

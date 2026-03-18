@@ -2,6 +2,7 @@
 
 namespace Zak\Lists\Actions;
 
+use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Zak\Lists\Contracts\ComponentLoaderContract;
@@ -19,11 +20,15 @@ class SaveOptionsAction
     {
         $component = $this->loader->resolve($list);
 
-        $data = $request->validate([
-            'columns' => ['nullable', 'array'],
-            'sort' => ['nullable', 'array'],
-            'filters' => ['nullable', 'array'],
-        ]);
+        // Данные уже провалидированы FormRequest (ListOptionsRequest).
+        // Поддерживаем fallback для прямых вызовов без FormRequest.
+        $data = $request instanceof FormRequest
+            ? $request->validated()
+            : $request->validate([
+                'columns' => ['nullable', 'array'],
+                'sort' => ['nullable', 'array'],
+                'filters' => ['nullable', 'array'],
+            ]);
 
         $options = $component->options->value;
         $options['columns'] = array_keys($data['columns'] ?? []);
