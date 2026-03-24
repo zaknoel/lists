@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
+use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Tests\Fixtures\Models\TestUser;
 
 beforeEach(function () {
@@ -102,4 +103,33 @@ it('возвращает 403 если нет прав', function () {
         'action' => 'deactivate',
         'items' => [1],
     ])->assertForbidden();
+});
+
+// ── Дефолтная bulk delete ─────────────────────────────────────────────────────
+
+it('дефолтный bulk-delete удаляет выбранные элементы', function () {
+    $items = TestUser::factory()->count(3)->create();
+    $ids = $items->pluck('id')->toArray();
+
+    $this->post(route('lists_action', 'default-bulk-test'), [
+        'action' => 'bulk-delete',
+        'items' => $ids,
+    ])
+        ->assertRedirect()
+        ->assertSessionHas('js_success');
+
+    expect(TestUser::whereIn('id', $ids)->count())->toBe(0);
+});
+
+it('компонент без явного bulkActions получает дефолтный bulk-delete', function () {
+    $component = app(ComponentLoaderContract::class)->resolve('default-bulk-test', false);
+
+    expect($component->bulkActions)->toHaveCount(1);
+    expect($component->bulkActions[0]->key)->toBe('bulk-delete');
+});
+
+it('bulkActions пустой массив отключает дефолтный bulk-delete', function () {
+    $component = app(ComponentLoaderContract::class)->resolve('test-users', false);
+
+    expect($component->bulkActions)->toBeEmpty();
 });

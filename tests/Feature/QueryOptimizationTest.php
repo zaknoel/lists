@@ -114,3 +114,38 @@ it('ComponentLoader возвращает один и тот же объект д
 
     expect($first)->toBe($second);
 });
+
+// ── SQL Server: ORDER BY не попадает в subquery DataTables count ──────────────
+
+it('DataTables AJAX не содержит ORDER BY в базовом query (SQL Server совместимость)', function () {
+    // SQL Server: select count(*) from (select ... order by ...) — недопустимо без TOP/OFFSET.
+    // После фикса orderBy применяется только к export-ветке; DataTables::of() получает чистый query.
+    TestUser::factory()->count(3)->create();
+
+    $this->actingAs(TestUser::factory()->create());
+
+    $params = [
+        'draw' => '1',
+        'start' => '0',
+        'length' => '10',
+        'order' => [['column' => 0, 'dir' => 'asc']],
+        'columns' => [
+            ['data' => 'name', 'name' => 'name', 'searchable' => 'true', 'orderable' => 'true', 'search' => ['value' => '', 'regex' => 'false']],
+        ],
+        'search' => ['value' => '', 'regex' => 'false'],
+    ];
+
+    $response = $this->call(
+        'GET',
+        route('lists', 'test-users'),
+        $params,
+        [],
+        [],
+        ['HTTP_X_REQUESTED_WITH' => 'XMLHttpRequest'],
+    );
+
+    $response->assertOk();
+    $data = $response->json();
+    expect($data)->toHaveKey('data');
+    expect($data)->toHaveKey('recordsTotal');
+});

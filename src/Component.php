@@ -4,6 +4,7 @@ namespace Zak\Lists;
 
 use Closure;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Arr;
@@ -53,7 +54,7 @@ class Component
         public ?Closure $customDetailPage = null,
         public ?Closure $customDeletePage = null,
         public array $customLabels = [],
-        public array $bulkActions = [],
+        public ?array $bulkActions = null,
     ) {
         if (! $this->model) {
             throw new InvalidArgumentException('Model not set!');
@@ -85,6 +86,19 @@ class Component
                 Action::make(__('lists.actions.edit'))->editAction(),
                 Action::make(__('lists.actions.delete'))->deleteAction(),
             ]);
+        }
+
+        if ($this->bulkActions === null) {
+            $this->bulkActions = [
+                BulkAction::make(__('lists.actions.delete'), 'bulk-delete', static function (EloquentCollection $items, Component $component): void {
+                    foreach ($items as $item) {
+                        abort_unless($component->userCanDelete($item), 403, __('lists.errors.unauthorized'));
+                        $component->eventOnBeforeDelete($item);
+                        $item->deleteOrFail();
+                        $component->eventOnAfterDelete($item);
+                    }
+                })->setSuccessMessage(__('lists.messages.bulk_deleted')),
+            ];
         }
 
         $this->grid_id = $this->model;

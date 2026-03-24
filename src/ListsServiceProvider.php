@@ -64,6 +64,13 @@ class ListsServiceProvider extends PackageServiceProvider
     public function packageBooted(): void
     {
         $this->validateConfig();
+
+        // spatie/laravel-package-tools registers translations under the 'lists::' namespace.
+        // We also add the path without a namespace so the short form __('lists.key') works
+        // in any host application without requiring published translation files.
+        $this->callAfterResolving('translator', function ($translator) {
+            $translator->getLoader()->addPath($this->package->basePath('/../resources/lang'));
+        });
     }
 
     /**

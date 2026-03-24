@@ -81,12 +81,16 @@ class IndexAction
             $field->generateFilter($query);
         }
 
-        $query->orderBy($curSort[0], $curSort[1]);
-
         if ($isExport) {
-            return $this->handleExport($component, clone $query, $fields, $list, $request);
+            $exportQuery = clone $query;
+            $exportQuery->orderBy($curSort[0], $curSort[1]);
+
+            return $this->handleExport($component, $exportQuery, $fields, $list, $request);
         }
 
+        // SQL Server forbids ORDER BY in subqueries without TOP/OFFSET.
+        // Sorting for DataTables AJAX requests is handled by yajra from request order[] params.
+        // The default sort column/direction is driven by curSort passed to the DataTables JS instance.
         /** @var EloquentDataTable $datatable */
         $datatable = DataTables::of($query);
 

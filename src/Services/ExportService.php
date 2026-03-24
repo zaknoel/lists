@@ -219,10 +219,13 @@ class ExportService
 
     /**
      * Возвращает количество строк в запросе.
+     *
      * Использует clone чтобы не модифицировать оригинальный Builder.
+     * reorder() снимает ORDER BY перед агрегацией — SQL Server не допускает ORDER BY
+     * в derived table без TOP/OFFSET (ошибка 1033).
      */
     public function countRows(Builder $query): int
     {
-        return (clone $query)->count();
+        return (clone $query)->reorder()->count();
     }
 }

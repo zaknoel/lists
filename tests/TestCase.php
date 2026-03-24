@@ -7,6 +7,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Schema;
 use Orchestra\Testbench\TestCase as Orchestra;
+use Yajra\DataTables\DataTablesServiceProvider;
 use Zak\Lists\ListsServiceProvider;
 use Zak\Lists\Tests\Fixtures\Models\TestUser;
 
@@ -31,6 +32,7 @@ class TestCase extends Orchestra
     protected function getPackageProviders($app): array
     {
         return [
+            DataTablesServiceProvider::class,
             ListsServiceProvider::class,
         ];
     }

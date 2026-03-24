@@ -42,7 +42,13 @@
                 </div>
             </div>
         @endif
-        <div class="card">
+        <div class="card" style="position: relative;">
+            <div id="dt-loading-overlay" style="display:none; position:absolute; inset:0; background:rgba(255,255,255,0.75); z-index:20; border-radius:inherit; align-items:center; justify-content:center; flex-direction:column; gap:12px;">
+                <div class="spinner-border text-primary" role="status" style="width:2.5rem;height:2.5rem;">
+                    <span class="visually-hidden">Загрузка...</span>
+                </div>
+                <span class="text-muted small">Загрузка данных...</span>
+            </div>
             <div class="card-body">
                 <div class="table-responsive">
                     <table
@@ -249,7 +255,7 @@
         });
         const table = $("#datatable").DataTable({
             pageLength: {{(int)$length}},
-            processing: true,
+            processing: false,
             serverSide: true,
             responsive: true,
             scrollX: true,
@@ -307,7 +313,14 @@
         table.on('init.dt', function () {
             $('.dataTables_scrollBody').css('position', 'static');
             initBulkAction();
-            //table.draw();
+        });
+        table.on('processing.dt', function (e, settings, processing) {
+            const overlay = $('#dt-loading-overlay');
+            if (processing) {
+                overlay.css('display', 'flex');
+            } else {
+                overlay.hide();
+            }
         });
         DataTable.ext.buttons.excel = {
             className: 'buttons-excel btn btn-dark mr-1',
@@ -367,7 +380,7 @@
                             </button>
                             <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton" style="">
                               @foreach($component->bulkActions as $action)
-                                <li><a class="dropdown-item" data-confirm="{{$action->confirmText()}}" onclick="executeAction(this, '{{$action->key()}}'); return false" href="javascript:void(0)">{{$action->label()}}</a></li>
+                                <li><a class="dropdown-item" data-confirm="{{$action->confirmText()}}" onclick="executeAction(this, '{{$action->key}}'); return false" href="javascript:void(0)">{{$action->label()}}</a></li>
                               @endforeach
                             </ul>
                           </div>

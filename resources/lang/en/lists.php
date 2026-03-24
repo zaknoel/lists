@@ -24,6 +24,7 @@ return [
         'delete_confirm' => 'Are you sure you want to delete this item?',
         'bulk_confirm' => 'Are you sure? This action cannot be undone.',
         'bulk_success' => 'Action completed successfully.',
+        'bulk_deleted' => 'Selected items deleted successfully.',
     ],
 
     'errors' => [

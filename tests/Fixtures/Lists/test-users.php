@@ -38,4 +38,5 @@ return new Component(
         Action::make('Редактировать')->editAction(),
         Action::make('Удалить')->deleteAction(),
     ],
+    bulkActions: [],
 );

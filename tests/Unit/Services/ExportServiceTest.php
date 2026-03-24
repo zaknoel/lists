@@ -145,6 +145,22 @@ it('shouldQueueExport возвращает false при пороге 0 (откл
     expect($this->service->shouldQueueExport($query))->toBeFalse();
 });
 
+it('countRows корректно считает строки когда query содержит orderBy', function () {
+    TestUser::factory()->count(3)->sequence(
+        ['email' => 'reorder-e1@test.com'],
+        ['email' => 'reorder-e2@test.com'],
+        ['email' => 'reorder-e3@test.com'],
+    )->create();
+
+    $query = TestUser::query()
+        ->where('email', 'like', 'reorder-e%@test.com')
+        ->orderBy('id', 'asc');
+
+    // SQL Server rejects count(*) wrapped around a subquery with ORDER BY.
+    // countRows() must strip orders before counting.
+    expect($this->service->countRows($query))->toBe(3);
+});
+
 it('countRows не модифицирует оригинальный Builder', function () {
     TestUser::factory()->count(3)->sequence(
         ['email' => 'count-d1@test.com'],
