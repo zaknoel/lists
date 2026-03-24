@@ -33,6 +33,14 @@ return [
         'action_not_found' => 'Action not found!',
         'action_failed' => 'Error executing action',
         'page_not_found' => 'Page not found',
+        'component_not_found' => 'Component not found: :list. Create file: :file',
+        'component_invalid' => 'Component is misconfigured: :list',
+        'export_limit_exceeded' => 'Export contains too many rows (:count). Maximum allowed: :max.',
+    ],
+
+    'export' => [
+        'queued' => 'Export is being processed. The file will be saved to the server.',
+        'queued_rows' => 'Export contains :count rows and has been queued for background processing.',
     ],
 
     'table' => [
@@ -41,6 +49,31 @@ return [
         'no_results' => 'No results',
         'loading' => 'Loading...',
         'all' => 'All',
+    ],
+
+    'filter' => [
+        'yes' => 'Yes',
+        'no' => 'No',
+        'all' => 'All',
+    ],
+
+    'fields' => [
+        'validation' => [
+            'email' => 'Invalid email address',
+            'boolean' => 'Invalid value',
+            'numeric' => 'Invalid number',
+            'file' => 'Invalid file',
+            'image' => 'Invalid image file',
+            'date' => 'Invalid date',
+            'password_min' => 'Password must be at least 8 characters long.',
+            'required_array' => 'Must be an array',
+        ],
+        'file' => [
+            'download' => 'Download file',
+        ],
+        'location' => [
+            'map' => 'Show on map',
+        ],
     ],
 
     'validation' => [

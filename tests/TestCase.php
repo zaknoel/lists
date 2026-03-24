@@ -20,6 +20,9 @@ class TestCase extends Orchestra
 
         $this->createTestTables();
 
+        // Загружаем переводы пакета в default namespace, чтобы __('lists.*') работал в тестах
+        $this->app->make('translation.loader')->addPath(realpath(__DIR__.'/../resources/lang'));
+
         Factory::guessFactoryNamesUsing(
             fn (string $modelName) => 'Zak\\Lists\\Tests\\Fixtures\\Factories\\'.class_basename($modelName).'Factory'
         );

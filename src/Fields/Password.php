@@ -17,7 +17,7 @@ class Password extends Text
     public string $type = 'password';
 
     public array $rules = [
-        'min:8' => 'Пароль должен быть не менее 8 символов длиной.',
+        'min:8' => 'lists.fields.validation.password_min',
     ];
 
     public function componentName(): string

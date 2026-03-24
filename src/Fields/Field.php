@@ -2,6 +2,7 @@
 
 namespace Zak\Lists\Fields;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Zak\Lists\Concerns\Makeable;
@@ -10,12 +11,11 @@ use Zak\Lists\Fields\Contracts\Displayable;
 use Zak\Lists\Fields\Contracts\Filterable;
 use Zak\Lists\Fields\Contracts\Validatable;
 use Zak\Lists\Fields\Traits\FieldEvents;
-use Zak\Lists\Fields\Traits\FieldFilter;
 use Zak\Lists\Fields\Traits\FieldProperty;
 
 abstract class Field implements Displayable, Filterable, Validatable
 {
-    use FieldEvents, FieldFilter, FieldProperty;
+    use FieldEvents, FieldProperty;
     use Makeable;
 
     /** @var FieldCast|null Cast для преобразования значений этого поля */
@@ -28,6 +28,10 @@ abstract class Field implements Displayable, Filterable, Validatable
     public string $attribute;
 
     public $value;
+
+    public string $filter_view = '';
+
+    public $filter_value = null;
 
     protected string $type = '';
 
@@ -163,6 +167,13 @@ abstract class Field implements Displayable, Filterable, Validatable
         return $this;
     }
 
+    public function filterView($view): static
+    {
+        $this->filter_view = $view;
+
+        return $this;
+    }
+
     public function getType(): string
     {
         return $this->type();
@@ -188,10 +199,39 @@ abstract class Field implements Displayable, Filterable, Validatable
         if ($this->view) {
             return view($this->view, ['field' => $this]);
         }
+
         $view = 'lists::fields.'.$this->componentName();
+
         if (! view()->exists($view)) {
-            // create view
-            $file = resource_path('views/vendor/lists/fields/'.$this->componentName().'.blade.php');
+            $expectedFile = resource_path('views/vendor/lists/fields/'.$this->componentName().'.blade.php');
+
+            throw new \RuntimeException(
+                'Zak/Lists: field view "'.$view.'" was not found. '
+                .'Create the package view or set a custom view via ->view(...). '
+                .'Expected override path: '.$expectedFile
+            );
+        }
+
+        return view($view, ['field' => $this]);
+    }
+
+    abstract public function componentName();
+
+    public function showFilter(): View|string
+    {
+        return view('lists::filter.main', ['field' => $this]);
+    }
+
+    public function filterContent(): View|string
+    {
+        if ($this->filter_view) {
+            return view($this->filter_view, ['field' => $this]);
+        }
+
+        $view = 'lists::filter.'.$this->componentName();
+
+        if (! view()->exists($view)) {
+            $file = resource_path('views/vendor/lists/filter/'.$this->componentName().'.blade.php');
             if (! file_exists($file)) {
                 file_put_contents($file, '<div></div>');
             }
@@ -200,7 +240,9 @@ abstract class Field implements Displayable, Filterable, Validatable
         return view($view, ['field' => $this]);
     }
 
-    abstract public function componentName();
+    abstract public function generateFilter(mixed $query = false): mixed;
+
+    abstract public function filteredValue(): string;
 
     public function getRules($item = null): array
     {
@@ -229,16 +271,18 @@ abstract class Field implements Displayable, Filterable, Validatable
     {
         $result = [];
         if ($this->multiple) {
-            $result[$this->attribute.'.array'] = 'Must be array';
+            $result[$this->attribute.'.array'] = __('lists.fields.validation.required_array');
         }
         if ($this->required) {
-            $result[$this->attribute.'.required'] = 'Поля '.$this->showLabel().' обязательно для заполнения';
+            $result[$this->attribute.'.required'] = __('lists.validation.required', ['attribute' => $this->showLabel()]);
         }
         foreach ($this->rules as $rule => $message) {
             if (str_contains($rule, ':')) {
                 $rule = explode(':', $rule)[0] ?? '';
             }
-            $result[$this->attribute.'.'.$rule] = $message;
+            $result[$this->attribute.'.'.$rule] = str_starts_with($message, 'lists.')
+                ? __($message)
+                : $message;
         }
 
         return $result;

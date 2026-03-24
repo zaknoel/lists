@@ -1,6 +1,7 @@
 {
     "name": "zak/lists",
     "description": "lists package for admin panels",
+    "version": "2.0.0",
     "keywords": [
         "zak",
         "laravel",
@@ -83,6 +84,6 @@
         }
     },
     "repositories": {},
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "prefer-stable": true
 }

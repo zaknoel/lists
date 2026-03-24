@@ -14,10 +14,17 @@ class BulkAction
 
     public string $icon = '';
 
+    /**
+     * Когда true — BulkActionRunner диспетчит задачу вместо синхронного выполнения.
+     * Callback ДОЛЖЕН быть invokable-классом (не замыканием): замыкания нельзя сериализовать в очередь.
+     */
+    public bool $async = false;
+
     public function __construct(
         public string $name,
         public string $key,
-        public \Closure $callback,
+        /** @var \Closure|object Closure для sync-действий; invokable-класс для async()-действий */
+        public mixed $callback,
     ) {
         $this->confirmText = __('lists.messages.bulk_confirm');
         $this->successMessage = __('lists.messages.bulk_success');
@@ -40,6 +47,17 @@ class BulkAction
     public function setIcon(string $icon): static
     {
         $this->icon = $icon;
+
+        return $this;
+    }
+
+    /**
+     * Помечает bulk action как асинхронный: callback выполнится в очереди.
+     * Callback должен быть invokable-классом, иначе диспетч будет пропущен с предупреждением.
+     */
+    public function async(): static
+    {
+        $this->async = true;
 
         return $this;
     }

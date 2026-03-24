@@ -1,0 +1,32 @@
+<?php
+
+use App\Models\{{ model }};
+use Zak\Lists\Action;
+use Zak\Lists\Component;
+use Zak\Lists\Fields\ID;
+use Zak\Lists\Fields\Text;
+
+return new Component(
+    model: {{ model }}::class,
+    label: '{{ label }}',
+    singleLabel: '{{ singular }}',
+    fields: [
+        ID::make('ID', 'id')
+            ->hideOnForms()
+            ->sortable()
+            ->filterable()
+            ->showOnIndex(),
+        Text::make('Name', 'name')
+            ->sortable()
+            ->searchable()
+            ->required()
+            ->showOnIndex(),
+        // TODO: add more fields
+    ],
+    actions: [
+        Action::make(__('lists.actions.view'))->showAction()->default(),
+        Action::make(__('lists.actions.edit'))->editAction(),
+        Action::make(__('lists.actions.delete'))->deleteAction(),
+    ],
+);
+

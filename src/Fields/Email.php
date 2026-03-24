@@ -7,6 +7,6 @@ class Email extends Text
     public string $type = 'email';
 
     public array $rules = [
-        'email' => 'Неправильный email',
+        'email' => 'lists.fields.validation.email',
     ];
 }

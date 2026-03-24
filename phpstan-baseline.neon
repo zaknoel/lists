@@ -1,0 +1,968 @@
+parameters:
+	ignoreErrors:
+		-
+			message: "#^Access to an undefined property Illuminate\\\\Database\\\\Eloquent\\\\Model\\:\\:\\$id\\.$#"
+			count: 1
+			path: src/Action.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Action\\:\\:show\\(\\) has parameter \\$func with no type specified\\.$#"
+			count: 1
+			path: src/Action.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: src/Action.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\BulkActionRunner\\:\\:loadItemsInChunks\\(\\) has parameter \\$component with no type specified\\.$#"
+			count: 1
+			path: src/Actions/BulkActionRunner.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\BulkActionRunner\\:\\:loadItemsInChunks\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Collection does not specify its types\\: TKey, TModel$#"
+			count: 1
+			path: src/Actions/BulkActionRunner.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 2
+			path: src/Actions/CreateAction.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\CreateAction\\:\\:prepareFormFields\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Actions/CreateAction.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Actions/EditAction.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\EditAction\\:\\:prepareEditFields\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Actions/EditAction.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 4
+			path: src/Actions/IndexAction.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\IndexAction\\:\\:handleExport\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Actions/IndexAction.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Actions\\\\ShowAction\\:\\:prepareDetailFields\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Actions/ShowAction.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Actions/StoreAction.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Actions/UpdateAction.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 1
+			path: src/BulkAction.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Component\\:\\:getQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Component.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Contracts\\\\QueryContract\\:\\:buildDetailQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Contracts/QueryContract.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Contracts\\\\QueryContract\\:\\:buildEditQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Contracts/QueryContract.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Contracts\\\\QueryContract\\:\\:buildIndexQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Contracts/QueryContract.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Contracts\\\\QueryContract\\:\\:findOrAbort\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Contracts/QueryContract.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:arrayValue\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:arrayValue\\(\\) has parameter \\$array with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:createButton\\(\\) has parameter \\$create with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:field\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:filter\\(\\) has parameter \\$filter with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:list\\(\\) has parameter \\$list with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:model\\(\\) has parameter \\$model with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:saveValue\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\BelongToMany\\:\\:saveValue\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/BelongToMany.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Fields/Boolean.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Boolean\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/Boolean.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Illuminate\\\\Http\\\\Request\\. Use \\-\\> instead\\.$#"
+			count: 2
+			path: src/Fields/Boolean.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Contracts\\\\Filterable\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/Contracts/Filterable.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\CustomField\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/CustomField.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\CustomField\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/CustomField.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\CustomField\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/CustomField.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Date\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Date.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Date\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Date.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Date\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Date.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Date\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Date.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:__construct\\(\\) has parameter \\$attribute with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:__construct\\(\\) has parameter \\$name with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:addRule\\(\\) has parameter \\$message with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:addRule\\(\\) has parameter \\$rule with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:componentName\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$attribute with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$default with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$defaultAction with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$filter_view with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$filterable with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$hideOnExport with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$multiple with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$name with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$onBeforeFilter with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$onFillForm with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$onSaveForm with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$onShowDetail with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$onShowList with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$required with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$rules with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$searchable with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$show_in_detail with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$show_in_index with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$show_on_add with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$show_on_update with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$sortable with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$view with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$virtual with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:create\\(\\) has parameter \\$width with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:default\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:defaultAction\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventBeforeFilter\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventBeforeFilter\\(\\) has parameter \\$query with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnFillForm\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnSaveForm\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnSaveForm\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnSaveForm\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnShowDetail\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:eventOnShowList\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:filterView\\(\\) has parameter \\$view with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:filterable\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:getRules\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:hideOnAdd\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:hideOnDetail\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:hideOnForms\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:hideOnIndex\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:hideOnUpdate\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:item\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:item\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:multiple\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:required\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:saveValue\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:saveValue\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:searchable\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showDetailAsIndex\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showOnAdd\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showOnDetail\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showOnForms\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showOnIndex\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:showOnUpdate\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:sortable\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:type\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:view\\(\\) has parameter \\$view with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:virtual\\(\\) has parameter \\$value with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Field\\:\\:width\\(\\) has parameter \\$col with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Property Zak\\\\Lists\\\\Fields\\\\Field\\:\\:\\$filter_value has no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Property Zak\\\\Lists\\\\Fields\\\\Field\\:\\:\\$value has no type specified\\.$#"
+			count: 1
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 2
+			path: src/Fields/Field.php
+
+		-
+			message: "#^Unsafe usage of new static\\(\\)\\.$#"
+			count: 2
+			path: src/Fields/FieldCollection.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:disk\\(\\) has parameter \\$disk with no type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:getRules\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:path\\(\\) has parameter \\$path with no type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\File\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Illuminate\\\\Http\\\\Request\\. Use \\-\\> instead\\.$#"
+			count: 1
+			path: src/Fields/File.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\ID\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/ID.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\ID\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/ID.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\ID\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/ID.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\ID\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/ID.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\ID\\:\\:type\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/ID.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Image\\:\\:maxHeight\\(\\) has parameter \\$height with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Image.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Image\\:\\:maxWidth\\(\\) has parameter \\$width with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Image.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Password\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Password.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Password\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Password.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Password\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Password.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:createButton\\(\\) has parameter \\$create with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:field\\(\\) has parameter \\$field with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:filter\\(\\) has parameter \\$filter with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:list\\(\\) has parameter \\$list with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:model\\(\\) has parameter \\$model with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Relation\\:\\:relationName\\(\\) has parameter \\$name with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Relation.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Fields/Select.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Select\\:\\:enum\\(\\) has parameter \\$array with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Select.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Select\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/Select.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Select\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Select.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Illuminate\\\\Http\\\\Request\\. Use \\-\\> instead\\.$#"
+			count: 2
+			path: src/Fields/Select.php
+
+		-
+			message: """
+				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
+				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
+			"""
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:generateFilter\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:handleFill\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:rows\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:rows\\(\\) has parameter \\$rows with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:saveHandler\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:saveHandler\\(\\) has parameter \\$data with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:saveHandler\\(\\) has parameter \\$item with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:setType\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:setType\\(\\) has parameter \\$type with no type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Fields\\\\Text\\:\\:type\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Illuminate\\\\Http\\\\Request\\. Use \\-\\> instead\\.$#"
+			count: 2
+			path: src/Fields/Text.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\ListImport\\:\\:__construct\\(\\) has parameter \\$all with no type specified\\.$#"
+			count: 1
+			path: src/ListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\ListImport\\:\\:__construct\\(\\) has parameter \\$fields with no type specified\\.$#"
+			count: 1
+			path: src/ListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\ListImport\\:\\:collection\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/ListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\ListImport\\:\\:setData\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/ListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\ListImport\\:\\:setData\\(\\) has parameter \\$all with no type specified\\.$#"
+			count: 1
+			path: src/ListImport.php
+
+		-
+			message: "#^Class Zak\\\\Lists\\\\Models\\\\UserOption uses generic trait Illuminate\\\\Database\\\\Eloquent\\\\Factories\\\\HasFactory but does not specify its types\\: TFactory$#"
+			count: 1
+			path: src/Models/UserOption.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Pagination\\\\AbstractPaginator\\:\\:lastPage\\(\\)\\.$#"
+			count: 1
+			path: src/Resources/ListCollectionResource.php
+
+		-
+			message: "#^Call to an undefined method Illuminate\\\\Pagination\\\\AbstractPaginator\\:\\:total\\(\\)\\.$#"
+			count: 1
+			path: src/Resources/ListCollectionResource.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Resources\\\\ListCollectionResource\\:\\:__construct\\(\\) has parameter \\$resource with generic class Illuminate\\\\Pagination\\\\AbstractPaginator but does not specify its types\\: TValue$#"
+			count: 1
+			path: src/Resources/ListCollectionResource.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Resources\\\\ListCollectionResource\\:\\:__construct\\(\\) has parameter \\$resource with generic class Illuminate\\\\Support\\\\Collection but does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/Resources/ListCollectionResource.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:buildRowsFromQuery\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:countRows\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:downloadQuery\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:downloadQuerySafe\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:exceedsExportLimit\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:shouldQueueExport\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Parameter \\#1 \\$rows of method Zak\\\\Lists\\\\Services\\\\ExportService\\:\\:download\\(\\) expects array\\<int, mixed\\>, array\\<string, array\\<int, array\\<string, mixed\\>\\>\\> given\\.$#"
+			count: 1
+			path: src/Services/ExportService.php
+
+		-
+			message: "#^Function setJsWarning not found\\.$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\QueryService\\:\\:applyEagerRelations\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\QueryService\\:\\:buildDetailQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\QueryService\\:\\:buildEditQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\QueryService\\:\\:buildIndexQuery\\(\\) return type with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\Services\\\\QueryService\\:\\:findOrAbort\\(\\) has parameter \\$query with generic class Illuminate\\\\Database\\\\Eloquent\\\\Builder but does not specify its types\\: TModel$#"
+			count: 1
+			path: src/Services/QueryService.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\SimpleListImport\\:\\:__construct\\(\\) has parameter \\$all with no type specified\\.$#"
+			count: 1
+			path: src/SimpleListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\SimpleListImport\\:\\:collection\\(\\) return type with generic class Illuminate\\\\Support\\\\Collection does not specify its types\\: TKey, TValue$#"
+			count: 1
+			path: src/SimpleListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\SimpleListImport\\:\\:setData\\(\\) has no return type specified\\.$#"
+			count: 1
+			path: src/SimpleListImport.php
+
+		-
+			message: "#^Method Zak\\\\Lists\\\\SimpleListImport\\:\\:setData\\(\\) has parameter \\$all with no type specified\\.$#"
+			count: 1
+			path: src/SimpleListImport.php
+
+		-
+			message: "#^Function getCurPageParams\\(\\) has parameter \\$add with no type specified\\.$#"
+			count: 1
+			path: src/helper.php
+
+		-
+			message: "#^Function getCurPageParams\\(\\) has parameter \\$remove with no type specified\\.$#"
+			count: 1
+			path: src/helper.php
+
+		-
+			message: "#^Function isReportable\\(\\) has parameter \\$e with no type specified\\.$#"
+			count: 1
+			path: src/helper.php
+
+		-
+			message: "#^Using nullsafe method call on non\\-nullable type Illuminate\\\\Http\\\\Request\\. Use \\-\\> instead\\.$#"
+			count: 3
+			path: src/helper.php

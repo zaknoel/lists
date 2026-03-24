@@ -7,7 +7,7 @@ use Carbon\Carbon;
 class Date extends Text
 {
     public array $rules = [
-        'date' => 'Неправильная дата',
+        'date' => 'lists.fields.validation.date',
     ];
 
     public bool $time = false;

@@ -3,7 +3,9 @@
 namespace Zak\Lists\Actions;
 
 use Illuminate\Contracts\View\View;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
@@ -15,6 +17,7 @@ use Zak\Lists\Component;
 use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Fields\Field;
+use Zak\Lists\Jobs\ExportListJob;
 use Zak\Lists\Services\ExportService;
 use Zak\Lists\Services\QueryService;
 
@@ -67,8 +70,9 @@ class IndexAction
         $this->updateSortPreference($request, $component);
         $this->updateLengthPreference($request, $component);
 
-        $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
-        $length = $component->options->value['length'] ?? 25;
+        $curSort = $component->options->value['curSort'] ?? [];
+        $curSort = (is_array($curSort) && count($curSort) >= 2) ? $curSort : ['id', 'desc'];
+        $length = $this->normalizeLength($component->options->value['length'] ?? config('lists.default_length', 25));
         $request->merge(['length' => $length]);
 
         $query = $this->queryService->buildIndexQuery($component, $request);
@@ -77,10 +81,14 @@ class IndexAction
             $field->generateFilter($query);
         }
 
+        $query->orderBy($curSort[0], $curSort[1]);
+
+        if ($isExport) {
+            return $this->handleExport($component, clone $query, $fields, $list, $request);
+        }
+
         /** @var EloquentDataTable $datatable */
         $datatable = DataTables::of($query);
-
-        $datatable->order(fn ($q) => $q->orderBy($curSort[0], $curSort[1]));
 
         $columns = array_map(fn (Field $f) => $f->attribute, $fields);
 
@@ -140,12 +148,52 @@ class IndexAction
             }
         }
 
-        // Экспорт в Excel
-        return $this->exportService->downloadSafe(
-            $datatable->toArray()['data'] ?? [],
+        throw new \LogicException('Export flow should be handled before DataTables rendering.');
+    }
+
+    /**
+     * Применяет лимит строк и стратегию async перед синхронной выгрузкой.
+     *
+     * @param  array<int, Field>  $fields
+     */
+    private function handleExport(
+        Component $component,
+        Builder $query,
+        array $fields,
+        string $list,
+        Request $request,
+    ): BinaryFileResponse|RedirectResponse {
+        $count = $this->exportService->countRows($query);
+
+        // Жёсткий лимит: если строк слишком много — отклоняем сразу.
+        if ($this->exportService->exceedsExportLimitByCount($count)) {
+            $max = (int) config('lists.max_export_rows', 50000);
+
+            return back()->with('js_error', __('lists.errors.export_limit_exceeded', [
+                'count' => number_format($count),
+                'max' => number_format($max),
+            ]));
+        }
+
+        // Мягкий порог: если строк больше порога — ставим в очередь.
+        if ($this->exportService->shouldQueueExportByCount($count)) {
+            $userId = (int) auth()->id();
+
+            ExportListJob::dispatch($list, $request->all(), $userId, $list);
+
+            return back()->with('js_info', __('lists.export.queued_rows', [
+                'count' => number_format($count),
+            ]));
+        }
+
+        return $this->exportService->downloadQuerySafe(
+            $component,
+            $query,
             $fields,
             $list,
+            $list,
             $query->toRawSql(),
+            (int) config('lists.export_chunk_size', 500),
         );
     }
 
@@ -159,7 +207,7 @@ class IndexAction
     {
         $curSort = $component->options->value['curSort'] ?? [];
         $curSort = (is_array($curSort) && count($curSort) >= 2) ? $curSort : ['id', 'desc'];
-        $length = $component->options->value['length'] ?? 25;
+        $length = $this->normalizeLength($component->options->value['length'] ?? config('lists.default_length', 25));
 
         $sortColumnIndex = (int) array_search($curSort[0], array_column($fields, 'attribute'), true);
         $curSort[2] = $sortColumnIndex;
@@ -240,9 +288,14 @@ class IndexAction
 
         if ($colName) {
             $options = $component->options->value;
-            $options['curSort'] = [$colName, $dir];
-            $component->options->value = $options;
-            $component->options->save();
+            $newSort = [$colName, $dir];
+            $currentSort = $options['curSort'] ?? null;
+
+            if ($currentSort !== $newSort) {
+                $options['curSort'] = $newSort;
+                $component->options->value = $options;
+                $component->options->save();
+            }
         }
     }
 
@@ -256,9 +309,27 @@ class IndexAction
         }
 
         $options = $component->options->value;
-        $options['length'] = (int) $request->get('length');
-        $component->options->value = $options;
-        $component->options->save();
+        $newLength = $this->normalizeLength((int) $request->get('length'));
+        $currentLength = (int) ($options['length'] ?? 0);
+
+        if ($currentLength !== $newLength) {
+            $options['length'] = $newLength;
+            $component->options->value = $options;
+            $component->options->save();
+        }
+    }
+
+    private function normalizeLength(mixed $length): int
+    {
+        $default = max(1, (int) config('lists.default_length', 25));
+        $max = max($default, (int) config('lists.max_length', 250));
+        $length = (int) $length;
+
+        if ($length <= 0) {
+            return $default;
+        }
+
+        return min($length, $max);
     }
 
     private function isAjaxRequest(Request $request): bool

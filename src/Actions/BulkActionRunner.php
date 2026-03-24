@@ -2,6 +2,7 @@
 
 namespace Zak\Lists\Actions;
 
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -10,6 +11,7 @@ use Throwable;
 use Zak\Lists\BulkAction;
 use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
+use Zak\Lists\Jobs\BulkActionJob;
 
 /**
  * Обрабатывает групповые действия над множеством элементов.
@@ -46,8 +48,21 @@ class BulkActionRunner
             return back()->with('js_error', __('lists.errors.action_not_found'));
         }
 
+        // Async path: замыкания не сериализуются, поэтому допустимы только invokable-классы.
+        if ($action->async) {
+            if (! is_object($action->callback) || ! method_exists($action->callback, '__invoke')) {
+                info('Zak.Lists.BulkActionRunner: async=true, но callback "'.$action->key.'" не является invokable-классом.');
+
+                return back()->with('js_error', __('lists.errors.action_failed').': async callback must be an invokable class.');
+            }
+
+            BulkActionJob::dispatch($list, $action->key, array_map('intval', $data['items']), (int) auth()->id());
+
+            return back()->with('js_success', $action->getSuccessMessage());
+        }
+
         try {
-            $items = $component->getQuery()->whereIn('id', $data['items'])->get();
+            $items = $this->loadItemsInChunks($component, $data['items']);
             call_user_func($action->callback, $items, $component, $request);
         } catch (Throwable $e) {
             if (isReportable($e)) {
@@ -58,5 +73,28 @@ class BulkActionRunner
         }
 
         return back()->with('js_success', $action->getSuccessMessage());
+    }
+
+    /**
+     * Загружает выбранные элементы пакетами, чтобы не строить один большой whereIn для больших bulk-операций.
+     * При этом callback по-прежнему получает обычную Eloquent Collection.
+     *
+     * @param  array<int, mixed>  $rawIds
+     */
+    private function loadItemsInChunks($component, array $rawIds): EloquentCollection
+    {
+        $ids = array_values(array_unique(array_map('intval', $rawIds)));
+        $ids = array_values(array_filter($ids, static fn (int $id) => $id > 0));
+
+        $items = new EloquentCollection;
+        $chunkSize = max(1, (int) config('lists.bulk_chunk_size', 500));
+
+        foreach (array_chunk($ids, $chunkSize) as $chunk) {
+            $items = $items->merge(
+                $component->getQuery()->whereIn('id', $chunk)->get()
+            );
+        }
+
+        return $items;
     }
 }

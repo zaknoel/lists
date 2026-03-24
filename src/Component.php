@@ -3,15 +3,14 @@
 namespace Zak\Lists;
 
 use Closure;
-use Exception;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Exceptions\HttpResponseException;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Artisan;
 use InvalidArgumentException;
-use Zak\Lists\Fields\BelongToMany;
 use Zak\Lists\Fields\Field;
 use Zak\Lists\Fields\FieldCollection;
-use Zak\Lists\Fields\Relation;
 use Zak\Lists\Models\UserOption;
 
 class Component
@@ -82,9 +81,9 @@ class Component
 
         if ($this->actions === null) {
             $this->actions = array_filter([
-                Action::make('Просмотр')->showAction()->default(),
-                Action::make('Редактировать')->editAction(),
-                Action::make('Удалить')->deleteAction(),
+                Action::make(__('lists.actions.view'))->showAction()->default(),
+                Action::make(__('lists.actions.edit'))->editAction(),
+                Action::make(__('lists.actions.delete'))->deleteAction(),
             ]);
         }
 
@@ -229,7 +228,10 @@ class Component
 
     public function getQuery(): Builder
     {
-        return $this->model::query();
+        /** @var class-string<Model> $modelClass */
+        $modelClass = $this->model;
+
+        return $modelClass::query();
     }
 
     public function getFilteredActions(mixed $item): array
@@ -272,8 +274,6 @@ class Component
     public function eventOnIndexQuery(mixed $query): mixed
     {
         $this->eventOnQuery($query);
-
-        $this->applyEagerLoading($query);
 
         if ($this->OnIndexQuery && is_callable($this->OnIndexQuery)) {
             return call_user_func($this->OnIndexQuery, $query);
@@ -348,8 +348,7 @@ class Component
             $redirectTo = call_user_func($this->{$property}, $context);
 
             if ($redirectTo) {
-                header('Location: '.$redirectTo);
-                exit;
+                throw new HttpResponseException(redirect()->to($redirectTo));
             }
         }
     }
@@ -388,13 +387,20 @@ class Component
      */
     public function scripts(): string
     {
+        $yandexMapsKey = (string) config('lists.yandex_maps_key', '');
+        $locationScript = 'https://api-maps.yandex.ru/2.1/?lang=ru_RU';
+
+        if ($yandexMapsKey !== '') {
+            $locationScript .= '&apikey='.urlencode($yandexMapsKey);
+        }
+
         $scripts = [
             'location' => [
-                '<script src="https://api-maps.yandex.ru/2.1/?lang=ru_RU&apikey=f583857c-aaf5-454e-943b-d94c3e908c3f" type="text/javascript"></script>',
+                '<script src="'.$locationScript.'" type="text/javascript"></script>',
             ],
             'checkbox' => [
-                '<link rel="stylesheet" href="/vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css">',
-                '<script src="/vendor/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js"></script>',
+                '<link rel="stylesheet" href="'.asset('vendor/lists/bootstrap-switch/dist/css/bootstrap3/bootstrap-switch.min.css').'">',
+                '<script src="'.asset('vendor/lists/bootstrap-switch/dist/js/bootstrap-switch.min.js').'"></script>',
             ],
         ];
 
@@ -412,39 +418,4 @@ class Component
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
-
-    /**
-     * Автоматически eager-load связи для видимых полей индекса.
-     */
-    private function applyEagerLoading(mixed $query): void
-    {
-        $visibleColumns = $this->options->value['columns'] ?? [];
-        $relations = [];
-
-        foreach ($this->fields as $field) {
-            if (! $field->show_in_index) {
-                continue;
-            }
-
-            if ($visibleColumns && ! in_array($field->attribute, $visibleColumns, false)) {
-                continue;
-            }
-
-            if ($field instanceof Relation) {
-                $name = $field->relationName ?: str_replace('_id', '', $field->attribute);
-
-                if (method_exists($this->model, $name)) {
-                    $relations[] = $name;
-                } else {
-                    report(new Exception('Relation not found: '.$this->model.'->'.$name));
-                }
-            } elseif ($field instanceof BelongToMany) {
-                $relations[] = $field->attribute;
-            }
-        }
-
-        if ($relations) {
-            $query->with($relations);
-        }
-    }
 }

@@ -60,4 +60,54 @@ class ListsServiceProvider extends PackageServiceProvider
         // Алиасы для удобного использования через app()
         $this->app->alias(ComponentLoaderContract::class, 'lists.loader');
     }
+
+    public function packageBooted(): void
+    {
+        $this->validateConfig();
+    }
+
+    /**
+     * Проверяет критические настройки конфига при старте приложения.
+     * Даёт ранний и понятный сигнал о неверной конфигурации.
+     *
+     * @throws \RuntimeException
+     */
+    private function validateConfig(): void
+    {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
+            return;
+        }
+
+        $path = config('lists.path');
+
+        if (empty($path)) {
+            throw new \RuntimeException(
+                'Zak/Lists: "lists.path" is not configured. Publish the config with: php artisan vendor:publish --tag="lists-config"'
+            );
+        }
+
+        $defaultLength = config('lists.default_length');
+
+        if (! is_int($defaultLength) || $defaultLength <= 0) {
+            throw new \RuntimeException(
+                'Zak/Lists: "lists.default_length" must be a positive integer. Got: '.var_export($defaultLength, true)
+            );
+        }
+
+        $maxExportRows = config('lists.max_export_rows', 0);
+
+        if (! is_int($maxExportRows) || $maxExportRows < 0) {
+            throw new \RuntimeException(
+                'Zak/Lists: "lists.max_export_rows" must be a non-negative integer. Got: '.var_export($maxExportRows, true)
+            );
+        }
+
+        $importClass = config('lists.import_class');
+
+        if (! empty($importClass) && ! class_exists($importClass)) {
+            throw new \RuntimeException(
+                'Zak/Lists: "lists.import_class" references a class that does not exist: '.$importClass
+            );
+        }
+    }
 }

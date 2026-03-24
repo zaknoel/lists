@@ -45,7 +45,7 @@ it('indexHandler возвращает badge Да для true', function () {
     $field->item($user);
     $field->indexHandler();
 
-    expect($field->value)->toContain('Да');
+    expect($field->value)->toContain(__('lists.filter.yes'));
     expect($field->value)->toContain('text-bg-success');
 });
 
@@ -55,7 +55,7 @@ it('indexHandler возвращает badge Нет для false', function () {
     $field->item($user);
     $field->indexHandler();
 
-    expect($field->value)->toContain('Нет');
+    expect($field->value)->toContain(__('lists.filter.no'));
     expect($field->value)->toContain('text-bg-danger');
 });
 
@@ -118,8 +118,8 @@ it('generateFilter устанавлиет filter_value с Да и Нет', funct
 
     expect($field->filter_value)->toHaveKey(1);
     expect($field->filter_value)->toHaveKey(0);
-    expect($field->filter_value[1])->toBe('Да');
-    expect($field->filter_value[0])->toBe('Нет');
+    expect($field->filter_value[1])->toBe(__('lists.filter.yes'));
+    expect($field->filter_value[0])->toBe(__('lists.filter.no'));
 });
 
 it('generateFilter без параметра в запросе не применяет фильтр', function () {
@@ -135,9 +135,9 @@ it('generateFilter без параметра в запросе не примен
 
 it('filteredValue возвращает строку из filter_value', function () {
     $field = Boolean::make('Активный', 'active');
-    $field->filter_value = [1 => 'Да'];
+    $field->filter_value = [1 => __('lists.filter.yes')];
 
-    expect($field->filteredValue())->toContain('Да');
+    expect($field->filteredValue())->toContain(__('lists.filter.yes'));
 });
 
 // ── Validation ────────────────────────────────────────────────────────────────

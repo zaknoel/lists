@@ -24,15 +24,11 @@ interface Filterable
 
     /**
      * Возвращает View с содержимым поля фильтра.
-     *
-     * @return View|string
      */
-    public function filterContent(): mixed;
+    public function filterContent(): View|string;
 
     /**
      * Возвращает View с обёрткой фильтра.
-     *
-     * @return View|string
      */
-    public function showFilter(): mixed;
+    public function showFilter(): View|string;
 }

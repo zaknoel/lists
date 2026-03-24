@@ -15,7 +15,7 @@ class File extends Text
     public bool $filterable = false;
 
     public array $rules = [
-        'file' => 'Неправильный файл',
+        'file' => 'lists.fields.validation.file',
         'max:60048' => 'The file size must not exceed 60MB.',
     ];
 
@@ -69,19 +69,23 @@ class File extends Text
     {
         $result = [];
         if ($this->multiple) {
-            $result[$this->attribute.'.array'] = 'Must be array';
+            $result[$this->attribute.'.array'] = __('lists.fields.validation.required_array');
             if ($this->required) {
-                $result[$this->attribute.'.*.required'] = 'Fields '.$this->showLabel().' must be filled!';
+                $result[$this->attribute.'.*.required'] = __('lists.validation.required', ['attribute' => $this->showLabel()]);
             }
             foreach ($this->rules as $rule => $message) {
-                $result[$this->attribute.'.*.'.$rule] = $message;
+                $result[$this->attribute.'.*.'.$rule] = str_starts_with($message, 'lists.')
+                    ? __($message)
+                    : $message;
             }
         } else {
             if ($this->required) {
-                $result[$this->attribute.'.required'] = 'Fields '.$this->showLabel().' must be filled!';
+                $result[$this->attribute.'.required'] = __('lists.validation.required', ['attribute' => $this->showLabel()]);
             }
             foreach ($this->rules as $rule => $message) {
-                $result[$this->attribute.'.'.$rule] = $message;
+                $result[$this->attribute.'.'.$rule] = str_starts_with($message, 'lists.')
+                    ? __($message)
+                    : $message;
             }
         }
 
@@ -112,7 +116,7 @@ class File extends Text
     public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}) {
-            $this->value = "<a target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>Скачать файл</a>";
+            $this->value = "<a target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>".__('lists.fields.file.download').'</a>';
         } else {
             $this->value = '';
         }

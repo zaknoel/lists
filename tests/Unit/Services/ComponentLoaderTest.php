@@ -1,6 +1,7 @@
 <?php
 
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 use Zak\Lists\Component;
 use Zak\Lists\Services\ComponentLoader;
@@ -68,4 +69,45 @@ it('компонент содержит правильные actions', function 
     $actions = $component->getActions();
 
     expect($actions)->toHaveCount(3);
+});
+
+// ── 9D: Single-include memoization ───────────────────────────────────────────
+
+it('sorted и base варианты одного компонента создают один экземпляр UserOption', function () {
+    $loader = new ComponentLoader;
+
+    // Загружаем base — вызывает firstOrCreate (1-2 запроса в зависимости от наличия записи)
+    $base = $loader->resolve('test-users', false);
+
+    // Замеряем только запросы во время sorted resolve — там не должно быть обращений к UserOption
+    DB::enableQueryLog();
+    $sorted = $loader->resolve('test-users', true);
+    $queries = DB::getQueryLog();
+    DB::disableQueryLog();
+
+    $userOptionQueries = array_filter($queries, fn ($q) => str_contains($q['query'], '_user_list_options'));
+
+    // Sorted resolve использует clone — ноль дополнительных запросов к user options
+    expect(count($userOptionQueries))->toBe(0);
+    expect($base)->not->toBe($sorted); // разные экземпляры (clone)
+});
+
+it('resolve с applySortOrder=true возвращает другой объект нежели base', function () {
+    $loader = new ComponentLoader;
+
+    $base = $loader->resolve('test-users', false);
+    $sorted = $loader->resolve('test-users', true);
+
+    expect($base)->not->toBe($sorted);
+    expect($base)->toBeInstanceOf(Component::class);
+    expect($sorted)->toBeInstanceOf(Component::class);
+});
+
+it('повторный resolve с applySortOrder=true возвращает закэшированный sorted экземпляр', function () {
+    $loader = new ComponentLoader;
+
+    $first = $loader->resolve('test-users', true);
+    $second = $loader->resolve('test-users', true);
+
+    expect($first)->toBe($second);
 });

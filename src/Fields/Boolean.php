@@ -7,7 +7,7 @@ class Boolean extends Text
     public bool $searchable = false;
 
     public array $rules = [
-        'boolean' => 'Неправильная значение',
+        'boolean' => 'lists.fields.validation.boolean',
     ];
 
     public int $width = 12;
@@ -22,8 +22,8 @@ class Boolean extends Text
     public function indexHandler(): void
     {
         $this->value = $this->item->{$this->attribute} ?
-            "<span class='badge text-bg-success'>Да</span>"
-            : "<span class='badge text-bg-danger'>Нет</span>";
+            "<span class='badge text-bg-success'>".__('lists.filter.yes').'</span>'
+            : "<span class='badge text-bg-danger'>".__('lists.filter.no').'</span>';
     }
 
     public function detailHandler(): void
@@ -49,10 +49,10 @@ class Boolean extends Text
             $v = explode('⚬', request()?->get($this->attribute, ''));
             if ($v) {
                 if (in_array('1', $v)) {
-                    $this->filter_value[1] = 'Да';
+                    $this->filter_value[1] = __('lists.filter.yes');
                 }
                 if (in_array('0', $v)) {
-                    $this->filter_value[0] = 'Нет';
+                    $this->filter_value[0] = __('lists.filter.no');
                 }
                 if ($query) {
                     $query->whereIn($this->attribute, array_keys($this->filter_value));

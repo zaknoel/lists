@@ -3,9 +3,12 @@
 namespace Zak\Lists\Fields;
 
 use Illuminate\Support\Arr;
+use Zak\Lists\Fields\Traits\FilterQueryCache;
 
 class Select extends Text
 {
+    use FilterQueryCache;
+
     public array $enum = [];
 
     public array $selected = [];
@@ -55,7 +58,7 @@ class Select extends Text
 
     public function filteredValue(): string
     {
-        return trim(implode(' | ', $this->filter_value)) ?: 'Все ';
+        return trim(implode(' | ', $this->filter_value)) ?: __('lists.filter.all');
     }
 
     public function generateFilter(mixed $query = false): mixed
@@ -70,8 +73,7 @@ class Select extends Text
         if (request()?->has($this->attribute)) {
             $v = explode('⚬', request()?->get($this->attribute, ''));
             if ($v && ($this instanceof Relation || $this instanceof BelongToMany)) {
-                $this->filter_value = $this->model::query()->whereIn('id', $v)->get(['id', 'name'])->pluck('name',
-                    'id')->toArray();
+                $this->filter_value = $this->cachedPluckNames($this->model, $v);
             } elseif ($v) {
                 $this->filter_value = Arr::where($this->enum, static function ($value, $key) use ($v) {
                     return in_array($key, $v, false);

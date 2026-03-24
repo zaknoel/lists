@@ -12,6 +12,14 @@ use Illuminate\Support\Collection;
  */
 class FieldCollection extends Collection
 {
+    private function filtered(callable $callback): static
+    {
+        /** @var array<int, Field> $items */
+        $items = $this->filter($callback)->values()->all();
+
+        return new static($items);
+    }
+
     /**
      * Создаёт коллекцию из массива полей.
      *
@@ -29,7 +37,7 @@ class FieldCollection extends Collection
      */
     public function visibleForIndex(): static
     {
-        return $this->filter(fn (Field $field) => $field->show_in_index)->values();
+        return $this->filtered(fn (Field $field) => $field->show_in_index);
     }
 
     /**
@@ -37,7 +45,7 @@ class FieldCollection extends Collection
      */
     public function visibleForDetail(): static
     {
-        return $this->filter(fn (Field $field) => $field->show_in_detail)->values();
+        return $this->filtered(fn (Field $field) => $field->show_in_detail);
     }
 
     /**
@@ -45,7 +53,7 @@ class FieldCollection extends Collection
      */
     public function visibleForCreate(): static
     {
-        return $this->filter(fn (Field $field) => $field->show_on_add)->values();
+        return $this->filtered(fn (Field $field) => $field->show_on_add);
     }
 
     /**
@@ -53,7 +61,7 @@ class FieldCollection extends Collection
      */
     public function visibleForUpdate(): static
     {
-        return $this->filter(fn (Field $field) => $field->show_on_update)->values();
+        return $this->filtered(fn (Field $field) => $field->show_on_update);
     }
 
     /**
@@ -61,7 +69,7 @@ class FieldCollection extends Collection
      */
     public function filterable(): static
     {
-        return $this->filter(fn (Field $field) => $field->filterable)->values();
+        return $this->filtered(fn (Field $field) => $field->filterable);
     }
 
     /**
@@ -69,7 +77,7 @@ class FieldCollection extends Collection
      */
     public function searchable(): static
     {
-        return $this->filter(fn (Field $field) => $field->searchable)->values();
+        return $this->filtered(fn (Field $field) => $field->searchable);
     }
 
     /**
@@ -77,7 +85,7 @@ class FieldCollection extends Collection
      */
     public function sortable(): static
     {
-        return $this->filter(fn (Field $field) => $field->sortable)->values();
+        return $this->filtered(fn (Field $field) => $field->sortable);
     }
 
     /**
@@ -85,7 +93,7 @@ class FieldCollection extends Collection
      */
     public function exportable(): static
     {
-        return $this->filter(fn (Field $field) => ! $field->hide_on_export)->values();
+        return $this->filtered(fn (Field $field) => ! $field->hide_on_export);
     }
 
     /**
@@ -95,7 +103,8 @@ class FieldCollection extends Collection
      */
     public function attributes(): array
     {
-        return $this->map(fn (Field $field) => $field->attribute)->values()->all();
+        /** @var array<int, string> */
+        return $this->map(fn (Field $field) => (string) $field->attribute)->values()->all();
     }
 
     /**
@@ -141,8 +150,8 @@ class FieldCollection extends Collection
             return $this;
         }
 
-        return $this->filter(
+        return $this->filtered(
             fn (Field $field) => in_array($field->attribute, $visibleColumns, false)
-        )->values();
+        );
     }
 }

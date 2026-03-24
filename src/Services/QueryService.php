@@ -20,6 +20,7 @@ class QueryService implements QueryContract
     {
         $query = $component->getQuery();
         $component->eventOnIndexQuery($query);
+        $this->applyEagerRelations($query, $component, $component->fieldCollection()->visibleForIndex()->all());
 
         return $query;
     }
@@ -28,6 +29,7 @@ class QueryService implements QueryContract
     {
         $query = $component->getQuery();
         $component->eventOnDetailQuery($query);
+        $this->applyEagerRelations($query, $component, $component->fieldCollection()->visibleForDetail()->all());
 
         return $query;
     }
@@ -36,6 +38,7 @@ class QueryService implements QueryContract
     {
         $query = $component->getQuery();
         $component->eventOnEditQuery($query);
+        $this->applyEagerRelations($query, $component, $component->fieldCollection()->visibleForUpdate()->all());
 
         return $query;
     }
@@ -50,11 +53,12 @@ class QueryService implements QueryContract
 
         // Если элемент не найден — возможно, он существует вне текущего global scope
         // (например, переключился проект). Пробуем без scope и редиректим с предупреждением.
+        /** @var class-string<Model> $modelClass */
         $modelClass = $query->getModel()::class;
         $itemWithoutScope = $modelClass::query()->withoutGlobalScopes()->where('id', $id)->first();
 
         if ($itemWithoutScope) {
-            setJsWarning(__('lists.errors.scope_switched'));
+            session()->flash('warning', __('lists.errors.scope_switched'));
             redirect('/')->send();
             exit;
         }
@@ -92,6 +96,20 @@ class QueryService implements QueryContract
             }
         }
 
-        return $relations;
+        return array_values(array_unique($relations));
+    }
+
+    /**
+     * Применяет eager loading к запросу, если есть подходящие relation fields.
+     *
+     * @param  array<int, Field>  $fields
+     */
+    private function applyEagerRelations(Builder $query, Component $component, array $fields): void
+    {
+        $relations = $this->resolveEagerRelations($component, $fields);
+
+        if ($relations !== []) {
+            $query->with($relations);
+        }
     }
 }

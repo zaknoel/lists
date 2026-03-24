@@ -22,23 +22,33 @@ class ComponentLoader implements ComponentLoaderContract
             return $this->cache[$cacheKey];
         }
 
-        $file = rtrim(config('lists.path', app_path('Lists/')), '/').'/'.$list.'.php';
+        // Обеспечиваем базовый компонент в кэше прежде чем создавать sorted-вариант.
+        // Это гарантирует ровно один вызов include и один запрос UserOption::firstOrCreate.
+        if (! isset($this->cache[$list])) {
+            $file = rtrim(config('lists.path', app_path('Lists/')), '/').'/'.$list.'.php';
 
-        if (! file_exists($file)) {
-            abort(404, "Компонент не найден: {$list}. Создайте файл: {$file}");
+            if (! file_exists($file)) {
+                abort(404, __('lists.errors.component_not_found', ['list' => $list, 'file' => $file]));
+            }
+
+            $component = include $file;
+
+            if (! $component instanceof Component) {
+                abort(404, __('lists.errors.component_invalid', ['list' => $list]));
+            }
+
+            $this->cache[$list] = $component;
         }
 
-        $component = include $file;
-
-        if (! $component instanceof Component) {
-            abort(404, "Компонент настроен некорректно: {$list}");
+        if (! $applySortOrder) {
+            return $this->cache[$list];
         }
 
-        if ($applySortOrder) {
-            $component = $this->applyColumnSortOrder($component);
-        }
+        // Клонируем базовый компонент чтобы не мутировать закэшированный экземпляр.
+        $sorted = clone $this->cache[$list];
+        $sorted = $this->applyColumnSortOrder($sorted);
 
-        return $this->cache[$cacheKey] = $component;
+        return $this->cache[$cacheKey] = $sorted;
     }
 
     /**
