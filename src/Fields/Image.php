@@ -13,7 +13,7 @@ class Image extends File
     public int $max_height = 100;
 
     public array $rules = [
-        'image' => 'Неправильный файл',
+        'image' => 'lists.fields.validation.image',
         'max:60048' => 'The image size must not exceed 60MB.',
     ];
 
@@ -36,11 +36,11 @@ class Image extends File
         return 'image';
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}) {
             $this->value = "<a style='min-width:100px; display:block' target='_blank' download='' href='".Storage::url($this->item->{$this->attribute})."'>
-                <img src='".Storage::url($this->item->{$this->attribute})."' style='max-width: 100px; max-height: 100px;'>
+                <img src='".Storage::url($this->item->{$this->attribute})."' alt='".e($this->name)."' style='max-width: 100px; max-height: 100px;'>
 </a>";
         } else {
             $this->value = '';
@@ -48,7 +48,7 @@ class Image extends File
 
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->indexHandler();
     }

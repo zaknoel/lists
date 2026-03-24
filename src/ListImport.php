@@ -2,41 +2,26 @@
 
 namespace Zak\Lists;
 
+use Illuminate\Support\Collection;
 use Maatwebsite\Excel\Concerns\FromCollection;
 
+/**
+ * Default Excel export import class.
+ *
+ * Receives a pre-prepared flat rows array (header row + data rows) from
+ * ExportService::prepareExportData() and returns it as an Eloquent collection.
+ *
+ * To customise export behaviour (styles, events, merged cells), publish the
+ * config and set 'lists.import_class' to your own class that accepts the same
+ * (array $rows) constructor signature and implements FromCollection.
+ */
 class ListImport implements FromCollection
 {
-    private array $all;
+    /** @param array<int, array<int|string, mixed>> $rows */
+    public function __construct(private readonly array $rows) {}
 
-    public function __construct($all, $fields)
+    public function collection(): Collection
     {
-        $data = [];
-        $header = [];
-        $allowed = [];
-        foreach ($fields as $field) {
-            $allowed[] = $field->attribute;
-            $header[] = $field->name;
-        }
-        $data[] = $header;
-        foreach ($all['data'] as $item) {
-            $d = [];
-            foreach ($item as $k => $v) {
-                if (in_array($k, $allowed)) {
-                    $d[$k] = strip_tags($v);
-                }
-            }
-            $data[] = $d;
-        }
-        $this->all = $data;
-    }
-
-    public function collection()
-    {
-        return collect($this->all);
-    }
-
-    public function setData($all)
-    {
-        return $this->all = $all;
+        return collect($this->rows);
     }
 }

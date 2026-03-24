@@ -1,9 +1,8 @@
 includes:
     - phpstan-baseline.neon
-    - vendor/larastan/larastan/extension.neon
 
 parameters:
-    level: 4
+    level: 6
     paths:
         - src
         - config
@@ -12,4 +11,5 @@ parameters:
     checkOctaneCompatibility: true
     checkModelProperties: true
     checkMissingIterableValueType: false
+    treatPhpDocTypesAsCertain: false
 

@@ -1,5 +1,8 @@
 <?php
 
+use Illuminate\Contracts\Debug\ExceptionHandler;
+use Illuminate\Support\Arr;
+
 if (! function_exists('getCurPageParams')) {
     function getCurPageParams($add = [], $remove = []): string
     {
@@ -19,6 +22,6 @@ if (! function_exists('getCurPageParams')) {
 if (! function_exists('isReportable')) {
     function isReportable($e): string
     {
-        return App::make(\Illuminate\Contracts\Debug\ExceptionHandler::class)->shouldReport($e);
+        return App::make(ExceptionHandler::class)->shouldReport($e);
     }
 }

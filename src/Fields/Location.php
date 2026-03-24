@@ -15,7 +15,7 @@ class Location extends Text
         return 'location';
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         $value = $this->item->{$this->attribute};
         if ($value) {
@@ -24,7 +24,7 @@ class Location extends Text
             $lon = trim($l[1] ?? '');
             if ($lat && $lon) {
                 $url = 'https://yandex.uz/maps/?ll='.$lon.'%2C'.$lat.'&mode=whatshere&whatshere%5Bpoint%5D='.$lon.'%2C'.$lat.'&whatshere%5Bzoom%5D=19&z=16';
-                $this->value = "<a target='_blank'  href='".$url."'>Показать на карте</a>";
+                $this->value = "<a target='_blank'  href='".$url."'>".__('lists.fields.location.map').'</a>';
             } else {
                 $this->value = $value;
             }
@@ -34,7 +34,7 @@ class Location extends Text
         }
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         $this->indexHandler();
     }

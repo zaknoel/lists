@@ -4,7 +4,8 @@ namespace Zak\Lists\Fields;
 
 class CustomField extends Field
 {
-    public bool $searchable=false;
+    public bool $searchable = false;
+
     public string $filtered_value = '';
 
     public function componentName(): string
@@ -12,42 +13,44 @@ class CustomField extends Field
         return 'custom';
     }
 
-    public function type()
+    public function type(): string
     {
         return 'custom';
     }
 
-    public function filteredValue()
+    public function filteredValue(): string
     {
         return $this->filtered_value;
     }
 
-    public function handleFill()
+    public function handleFill(): void
     {
         // TODO: Implement handleFill() method.
     }
 
-    public function saveHandler($item, $data)
+    public function saveHandler($item, $data): void
     {
         // TODO: Implement saveHandler() method.
     }
 
-    public function detailHandler()
+    public function detailHandler(): void
     {
         // TODO: Implement detailHandler() method.
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         // TODO: Implement indexHandler() method.
     }
 
-    public function generateFilter($query = false)
+    public function generateFilter(mixed $query = false): mixed
     {
         if (is_callable($this->filterCallback)) {
             call_user_func($this->filterCallback, $query, $this);
+
             return $query;
         }
+
         return $query;
     }
 }

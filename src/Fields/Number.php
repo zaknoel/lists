@@ -5,7 +5,7 @@ namespace Zak\Lists\Fields;
 class Number extends Text
 {
     public array $rules = [
-        'numeric' => 'Неправильный число',
+        'numeric' => 'lists.fields.validation.numeric',
     ];
 
     public string $type = 'number';

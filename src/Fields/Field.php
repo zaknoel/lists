@@ -2,27 +2,38 @@
 
 namespace Zak\Lists\Fields;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Zak\Lists\Concerns\Makeable;
+use Zak\Lists\Fields\Casts\FieldCast;
+use Zak\Lists\Fields\Contracts\Displayable;
+use Zak\Lists\Fields\Contracts\Filterable;
+use Zak\Lists\Fields\Contracts\Validatable;
 use Zak\Lists\Fields\Traits\FieldEvents;
-use Zak\Lists\Fields\Traits\FieldFilter;
 use Zak\Lists\Fields\Traits\FieldProperty;
 
-abstract class Field
+abstract class Field implements Displayable, Filterable, Validatable
 {
-    use FieldEvents, FieldFilter, FieldProperty;
+    use FieldEvents, FieldProperty;
     use Makeable;
+
+    /** @var FieldCast|null Cast для преобразования значений этого поля */
+    protected ?FieldCast $cast = null;
 
     public string $name;
 
-    public bool $hide_on_export=false;
+    public bool $hide_on_export = false;
 
     public string $attribute;
 
     public $value;
 
-    protected string $type='';
+    public string $filter_view = '';
+
+    public $filter_value = null;
+
+    protected string $type = '';
 
     protected string $component_name;
 
@@ -124,16 +135,41 @@ abstract class Field
         if ($onShowList) {
             $instance->onShowList($onShowList);
         }
-        if($hideOnExport) {
+        if ($hideOnExport) {
             $instance->hideOnExport();
         }
 
         return $instance;
     }
 
+    /**
+     * Задаёт cast для трансформации значений поля при чтении и записи.
+     */
+    public function withCast(FieldCast $cast): static
+    {
+        $this->cast = $cast;
+
+        return $this;
+    }
+
+    /**
+     * Возвращает текущий cast или null.
+     */
+    public function getCast(): ?FieldCast
+    {
+        return $this->cast;
+    }
+
     public function addRule($rule, $message): static
     {
         $this->rules[$rule] = $message;
+
+        return $this;
+    }
+
+    public function filterView($view): static
+    {
+        $this->filter_view = $view;
 
         return $this;
     }
@@ -158,15 +194,44 @@ abstract class Field
 
     abstract public function handleFill();
 
-    public function show()
+    public function show(): mixed
     {
         if ($this->view) {
             return view($this->view, ['field' => $this]);
         }
+
         $view = 'lists::fields.'.$this->componentName();
+
         if (! view()->exists($view)) {
-            // create view
-            $file = resource_path('views/vendor/lists/fields/'.$this->componentName().'.blade.php');
+            $expectedFile = resource_path('views/vendor/lists/fields/'.$this->componentName().'.blade.php');
+
+            throw new \RuntimeException(
+                'Zak/Lists: field view "'.$view.'" was not found. '
+                .'Create the package view or set a custom view via ->view(...). '
+                .'Expected override path: '.$expectedFile
+            );
+        }
+
+        return view($view, ['field' => $this]);
+    }
+
+    abstract public function componentName();
+
+    public function showFilter(): View|string
+    {
+        return view('lists::filter.main', ['field' => $this]);
+    }
+
+    public function filterContent(): View|string
+    {
+        if ($this->filter_view) {
+            return view($this->filter_view, ['field' => $this]);
+        }
+
+        $view = 'lists::filter.'.$this->componentName();
+
+        if (! view()->exists($view)) {
+            $file = resource_path('views/vendor/lists/filter/'.$this->componentName().'.blade.php');
             if (! file_exists($file)) {
                 file_put_contents($file, '<div></div>');
             }
@@ -175,7 +240,9 @@ abstract class Field
         return view($view, ['field' => $this]);
     }
 
-    abstract public function componentName();
+    abstract public function generateFilter(mixed $query = false): mixed;
+
+    abstract public function filteredValue(): string;
 
     public function getRules($item = null): array
     {
@@ -204,16 +271,18 @@ abstract class Field
     {
         $result = [];
         if ($this->multiple) {
-            $result[$this->attribute.'.array'] = 'Must be array';
+            $result[$this->attribute.'.array'] = __('lists.fields.validation.required_array');
         }
         if ($this->required) {
-            $result[$this->attribute.'.required'] = 'Поля '.$this->showLabel().' обязательно для заполнения';
+            $result[$this->attribute.'.required'] = __('lists.validation.required', ['attribute' => $this->showLabel()]);
         }
         foreach ($this->rules as $rule => $message) {
             if (str_contains($rule, ':')) {
                 $rule = explode(':', $rule)[0] ?? '';
             }
-            $result[$this->attribute.'.'.$rule] = $message;
+            $result[$this->attribute.'.'.$rule] = str_starts_with($message, 'lists.')
+                ? __($message)
+                : $message;
         }
 
         return $result;
@@ -232,7 +301,7 @@ abstract class Field
 
     abstract public function saveHandler($item, $data);
 
-    public function showDetail()
+    public function showDetail(): mixed
     {
         $this->detailHandler();
         $this->eventOnShowDetail();
@@ -240,9 +309,9 @@ abstract class Field
         return $this->value;
     }
 
-    abstract public function detailHandler();
+    abstract public function detailHandler(): void;
 
-    public function showIndex($item, $list, $action = null)
+    public function showIndex(mixed $item, string $list, mixed $action = null): mixed
     {
         $this->indexHandler();
         $this->eventOnShowList();
@@ -254,11 +323,12 @@ abstract class Field
         return $this->value;
     }
 
-    abstract public function indexHandler();
+    abstract public function indexHandler(): void;
 
     public function hideOnExport(): static
     {
         $this->hide_on_export = true;
+
         return $this;
     }
 }

@@ -1,26 +1,45 @@
 <?php
 
-use App\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Support\Facades\Route;
-use Zak\Lists\Http\Contollers\ListController;
+use Zak\Lists\Http\Controllers\ListController;
 
 Route::middleware(config('lists.middleware', ['web', 'auth']))->group(function () {
-    Route::post('/lists/{list}/option', [ListController::class, 'options'])->name('lists_option')
-        ->withoutMiddleware([VerifyCsrfToken::class]);
 
-    Route::post('/lists/{list}/action', [ListController::class, 'actions'])->name('lists_action')
-        ->withoutMiddleware([VerifyCsrfToken::class]);
-    //add
-    Route::get('/lists/{list}/add', [ListController::class, 'add_form'])->name('lists_add');
-    Route::post('/lists/{list}/add', [ListController::class, 'add_save']);
-    //edit
-    Route::get('/lists/{list}/edit/{item}', [ListController::class, 'edit_form'])->name('lists_edit')
-    ->where('item', '[0-9]+');
-    Route::post('/lists/{list}/edit/{item}', [ListController::class, 'edit_save'])->where('item', '[0-9]+');
+    // Настройки пользователя (порядок колонок, фильтры)
+    Route::post('/lists/{list}/option', [ListController::class, 'options'])->name('lists_option');
 
-    Route::any('/lists/{list}', [ListController::class, 'list'])->name('lists')
-        ->withoutMiddleware([VerifyCsrfToken::class]);
-    Route::get('/lists/{list}/{item}', [ListController::class, 'detail'])->name('lists_detail')->where('item', '[0-9]+');
-    Route::get('/lists/{list}/{item}/{page}', [ListController::class, 'pages'])->name('lists_pages')->where('item', '[0-9]+');
-    Route::post('/lists/{list}/delete/{item}', [ListController::class, 'delete'])->name('lists_delete')->where('item', '[0-9]+');
+    // Групповые действия (bulk actions)
+    Route::post('/lists/{list}/action', [ListController::class, 'bulkAction'])->name('lists_action');
+
+    // Создание
+    Route::get('/lists/{list}/add', [ListController::class, 'create'])->name('lists_add');
+    Route::post('/lists/{list}/add', [ListController::class, 'store'])->name('lists_store');
+
+    // Редактирование
+    Route::get('/lists/{list}/{item}/edit', [ListController::class, 'edit'])
+        ->name('lists_edit')
+        ->where('item', '[0-9]+');
+
+    Route::match(['POST', 'PUT'], '/lists/{list}/{item}/edit', [ListController::class, 'update'])
+        ->name('lists_update')
+        ->where('item', '[0-9]+');
+
+    // Удаление (DELETE + POST-spoofing для HTML-форм)
+    Route::delete('/lists/{list}/{item}', [ListController::class, 'destroy'])
+        ->name('lists_delete')
+        ->where('item', '[0-9]+');
+
+    // Кастомные страницы (вкладки)
+    Route::get('/lists/{list}/{item}/{page}', [ListController::class, 'pages'])
+        ->name('lists_pages')
+        ->where('item', '[0-9]+');
+
+    // Индекс (DataTables + Excel — работает через Any из-за DataTables AJAX POST)
+    Route::any('/lists/{list}', [ListController::class, 'index'])->name('lists');
+
+    // Детальная страница
+    Route::get('/lists/{list}/{item}', [ListController::class, 'show'])
+        ->name('lists_detail')
+        ->where('item', '[0-9]+');
+
 });

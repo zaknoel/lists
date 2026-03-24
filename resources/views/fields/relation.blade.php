@@ -1,5 +1,17 @@
-@php use Zak\Lists\Fields\Relation;use Zak\Lists\ListComponent; @endphp
+@php
+    use Zak\Lists\Contracts\ComponentLoaderContract;
+    use Zak\Lists\Fields\Relation;
+@endphp
 @php /**@var Relation $field*/ @endphp
+@php
+    $createRelationRoute = null;
+
+    if ($field->list) {
+        $createRelationRoute = app(ComponentLoaderContract::class)
+            ->resolve($field->list)
+            ->getRoute('lists_add', $field->list);
+    }
+@endphp
 <div class="input-group">
     <select
         @class(["form-control ajax_sel", 'is-invalid'=>$errors->has($field->attribute)])
@@ -22,7 +34,7 @@
     @if($field->list && $field->createButton && auth()->user()->can('create', $field->model))
         <div class="input-group-append">
             <button class="btn btn-secondary"
-                    onclick="createRealtion(this, '{{ListComponent::getComponent($field->list)->getRoute('lists_add', $field->list)}}', '{{$field->attribute}}')"
+                    onclick="createRealtion(this, '{{$createRelationRoute}}', '{{$field->attribute}}')"
                     title="Добавить новый" style="border-top-left-radius: 0; border-bottom-left-radius: 0; height: 100%"
                     type="button">
                 <i class="ti ti-plus"></i>

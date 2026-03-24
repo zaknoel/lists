@@ -1,83 +1,171 @@
-# lists package for admin panels
+# Zak/Lists
 
-[![Latest Version on Packagist](https://img.shields.io/packagist/v/zaknoel/lists.svg?style=flat-square)](https://packagist.org/packages/zaknoel/lists)
-[![GitHub Tests Action Status](https://img.shields.io/github/actions/workflow/status/zaknoel/lists/run-tests.yml?branch=main&label=tests&style=flat-square)](https://github.com/zaknoel/lists/actions?query=workflow%3Arun-tests+branch%3Amain)
-[![GitHub Code Style Action Status](https://img.shields.io/github/actions/workflow/status/zaknoel/lists/fix-php-code-style-issues.yml?branch=main&label=code%20style&style=flat-square)](https://github.com/zaknoel/lists/actions?query=workflow%3A"Fix+PHP+code+style+issues"+branch%3Amain)
-[![Total Downloads](https://img.shields.io/packagist/dt/zaknoel/lists.svg?style=flat-square)](https://packagist.org/packages/zaknoel/lists)
+[![Latest Version](https://img.shields.io/badge/version-2.0.0-blue.svg?style=flat-square)](CHANGELOG.md)
+[![Tests](https://img.shields.io/badge/tests-450%20passing-brightgreen.svg?style=flat-square)](TESTING.md)
+[![PHPStan Level](https://img.shields.io/badge/PHPStan-level%206-blueviolet.svg?style=flat-square)](phpstan.neon.dist)
+[![PHP](https://img.shields.io/badge/PHP-8.2%2B-777BB4.svg?style=flat-square)](composer.json)
 
-This is where your description should go. Limit it to a paragraph or two. Consider adding a small example.
+Zak/Lists — Laravel CRUD-пакет для административных списков и data grids.
 
-## Support us
+Пакет даёт:
 
-[<img src="https://github-ads.s3.eu-central-1.amazonaws.com/lists.jpg?t=1" width="419px" />](https://spatie.be/github-ad-click/lists)
+- декларативные списки через `app/Lists/*.php`
+- поля `Text`, `Email`, `Number`, `Boolean`, `Date`, `Relation`, `BelongToMany`, `File`, `Image`, `Location` и др.
+- готовые CRUD-маршруты и Blade UI
+- DataTables AJAX flow
+- фильтрацию, сортировку и пользовательские настройки колонок
+- bulk actions (sync и async через очередь)
+- Excel export с лимитом строк и async offload через очередь
+- Laravel policy-based authorization
+- PHPStan level 6 static analysis
+- Pest test suite с **450 passing tests / 707 assertions**
 
-We invest a lot of resources into creating [best in class open source packages](https://spatie.be/open-source). You can support us by [buying one of our paid products](https://spatie.be/open-source/support-us).
+## Требования
 
-We highly appreciate you sending us a postcard from your hometown, mentioning which of our package(s) you are using. You'll find our address on [our contact page](https://spatie.be/about-us). We publish all received postcards on [our virtual postcard wall](https://spatie.be/open-source/postcards).
+- PHP 8.2+
+- Laravel 11 или 12
+- `yajra/laravel-datatables`
+- `maatwebsite/excel`
 
-## Installation
-
-You can install the package via composer:
+## Установка
 
 ```bash
 composer require zak/lists
-```
-
-You can publish and run the migrations with:
-
-```bash
 php artisan vendor:publish --tag="lists-migrations"
 php artisan migrate
-```
-
-You can publish the config file with:
-
-```bash
 php artisan vendor:publish --tag="lists-config"
 ```
 
-This is the contents of the published config file:
+При необходимости опубликуйте assets, views и переводы:
+
+```bash
+php artisan vendor:publish --tag="lists-assets"
+php artisan vendor:publish --tag="lists-views"
+php artisan vendor:publish --tag="lists-translations"
+```
+
+## Конфиг
+
+Файл `config/lists.php`:
 
 ```php
+<?php
+
 return [
+	'path' => app_path('Lists/'),
+	'layout' => 'layouts.app',
+	'middleware' => ['web', 'auth'],
 ];
 ```
 
-Optionally, you can publish the views using
+## Быстрый старт
 
-```bash
-php artisan vendor:publish --tag="lists-views"
-```
-
-## Usage
+Создайте файл `app/Lists/users.php`:
 
 ```php
+<?php
 
+use App\Models\User;
+use Zak\Lists\Action;
+use Zak\Lists\Component;
+use Zak\Lists\Fields\Boolean;
+use Zak\Lists\Fields\ID;
+use Zak\Lists\Fields\Text;
+
+return new Component(
+	model: User::class,
+	label: 'Пользователи',
+	singleLabel: 'пользователь',
+	fields: [
+		ID::make('ID', 'id')
+			->hideOnForms()
+			->sortable()
+			->showOnIndex(),
+
+		Boolean::make('Активность', 'active')
+			->sortable()
+			->filterable()
+			->default(true),
+
+		Text::make('Имя', 'name')
+			->required()
+			->searchable()
+			->sortable()
+			->defaultAction(),
+
+		Text::make('Email', 'email')
+			->required()
+			->addRule('email', 'lists.fields.validation.email')
+			->addRule('unique:users', 'Email already exists'),
+	],
+	actions: [
+		Action::make(__('lists.actions.view'))->showAction()->default(),
+		Action::make(__('lists.actions.edit'))->editAction(),
+		Action::make(__('lists.actions.delete'))->deleteAction(),
+	],
+);
 ```
 
-## Testing
+После этого список будет доступен по адресу:
+
+```text
+/lists/users
+```
+
+## Основные маршруты
+
+- `GET /lists/{list}` — index
+- `GET /lists/{list}/add` — create form
+- `POST /lists/{list}/add` — store
+- `GET /lists/{list}/{item}` — detail
+- `GET /lists/{list}/{item}/edit` — edit form
+- `POST|PUT /lists/{list}/{item}/edit` — update
+- `DELETE /lists/{list}/{item}` — destroy
+- `POST /lists/{list}/option` — save options
+- `POST /lists/{list}/action` — bulk action
+- `GET /lists/{list}/{item}/{page}` — custom page
+
+## Artisan-команды
+
+Создать заготовку компонента:
 
 ```bash
-composer test
+php artisan zak:component users --model=User
 ```
 
-## Changelog
+Создать кастомное поле:
 
-Please see [CHANGELOG](CHANGELOG.md) for more information on what has changed recently.
+```bash
+php artisan zak:make-field StatusField
+```
 
-## Contributing
+## Что читать дальше
 
-Please see [CONTRIBUTING](CONTRIBUTING.md) for details.
+- `GETTING_STARTED.md` — пошаговая настройка первого списка
+- `FIELDS.md` — все типы полей и fluent API
+- `CUSTOMIZATION.md` — callbacks, views, pages, custom fields, bulk actions
+- `API.md` — reference по классам и контрактам
+- `ARCHITECTURE.md` — обзор архитектуры v2
+- `MIGRATION.md` — перенос со старого API на v2
+- `TESTING.md` — структура и запуск тестов
+- `TROUBLESHOOTING.md` — типовые ошибки и решения
 
-## Security Vulnerabilities
+## Тестирование
 
-Please review [our security policy](../../security/policy) on how to report security vulnerabilities.
+```bash
+./vendor/bin/pest --compact
+./vendor/bin/pint --dirty --format agent
+./vendor/bin/phpstan analyse
+```
 
-## Credits
+## Статус проекта
 
-- [ZakNoel](https://github.com/zaknoel)
-- [All Contributors](../../contributors)
+Текущий статус refactoring-проекта отражён в `PROJECT-STATUS.md`.
 
-## License
+Ключевые документы refactoring-фазы:
 
-The MIT License (MIT). Please see [License File](LICENSE.md) for more information.
+- `README-REFACTORING.md`
+- `.github/ARCHITECTURE.md`
+- `.github/MIGRATION_GUIDE.md`
+- `plan-zakLists.prompt.md`
+

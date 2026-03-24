@@ -69,112 +69,112 @@ trait FieldProperty
         return $this;
     }
 
-    public function defaultAction($value=true): static
+    public function defaultAction($value = true): static
     {
         $this->defaultAction = $value;
 
         return $this;
     }
 
-    public function filterable($value=true): static
+    public function filterable($value = true): static
     {
         $this->filterable = $value;
 
         return $this;
     }
 
-    public function multiple($value=true): static
+    public function multiple($value = true): static
     {
         $this->multiple = $value;
 
         return $this;
     }
 
-    public function sortable($value=true): static
+    public function sortable($value = true): static
     {
         $this->sortable = $value;
 
         return $this;
     }
 
-    public function showOnIndex($value=true): static
+    public function showOnIndex($value = true): static
     {
         $this->show_in_index = $value;
 
         return $this;
     }
 
-    public function virtual($value=true): static
+    public function virtual($value = true): static
     {
         $this->virtual = $value;
 
         return $this;
     }
 
-    public function required($value=true): static
+    public function required($value = true): static
     {
         $this->required = $value;
 
         return $this;
     }
 
-    public function searchable($value=true): static
+    public function searchable($value = true): static
     {
         $this->searchable = $value;
 
         return $this;
     }
 
-    public function hideOnIndex($value=true): static
+    public function hideOnIndex($value = true): static
     {
-        $this->show_in_index = !$value;
+        $this->show_in_index = ! $value;
 
         return $this;
     }
 
-    public function showOnDetail($value=true): static
+    public function showOnDetail($value = true): static
     {
         $this->show_in_detail = $value;
 
         return $this;
     }
 
-    public function hideOnDetail($value=true): static
+    public function hideOnDetail($value = true): static
     {
-        $this->show_in_detail = !$value;
+        $this->show_in_detail = ! $value;
 
         return $this;
     }
 
-    public function showOnUpdate($value=true): static
+    public function showOnUpdate($value = true): static
     {
         $this->show_on_update = $value;
 
         return $this;
     }
 
-    public function hideOnUpdate($value=true): static
+    public function hideOnUpdate($value = true): static
     {
-        $this->show_on_update = !$value;
+        $this->show_on_update = ! $value;
 
         return $this;
     }
 
-    public function showOnAdd($value=true): static
+    public function showOnAdd($value = true): static
     {
         $this->show_on_add = $value;
 
         return $this;
     }
 
-    public function hideOnAdd($value=true): static
+    public function hideOnAdd($value = true): static
     {
-        $this->show_on_add = !$value;
+        $this->show_on_add = ! $value;
 
         return $this;
     }
 
-    public function showOnForms($value=true): static
+    public function showOnForms($value = true): static
     {
         $this->show_on_add = $value;
         $this->show_on_update = $value;
@@ -182,10 +182,10 @@ trait FieldProperty
         return $this;
     }
 
-    public function hideOnForms($value=true): static
+    public function hideOnForms($value = true): static
     {
-        $this->show_on_add = !$value;
-        $this->show_on_update = !$value;
+        $this->show_on_add = ! $value;
+        $this->show_on_update = ! $value;
 
         return $this;
     }

@@ -2,7 +2,7 @@
 
 namespace Zak\Lists\Fields;
 
-use Zak\Lists\ListComponent;
+use Zak\Lists\Contracts\ComponentLoaderContract;
 
 class BelongToMany extends Select
 {
@@ -33,8 +33,6 @@ class BelongToMany extends Select
 
         return $this;
     }
-
-
 
     public function model($model): static
     {
@@ -87,31 +85,36 @@ class BelongToMany extends Select
 
     }
 
-    public function indexHandler()
+    public function indexHandler(): void
     {
         if ($this->item->{$this->attribute}->count()) {
             if ($this->list && auth()->user()->can('viewAny', $this->model)) {
-                $c = ListComponent::getComponent($this->list);
+                $c = app(ComponentLoaderContract::class)->resolve($this->list);
                 $this->value = implode(', ', $this->item->{$this->attribute}
                     ->each(function ($item) use ($c) {
                         $item->{$this->field.'_new'} = "<a href='".$c->getRoute('lists_detail', $this->list,
-                                $item)."' target='_blank' class='text-secondary'>".$item->{$this->field}.'</a>';
+                            $item)."' target='_blank' class='text-secondary'>".$item->{$this->field}.'</a>';
                     })
                     ->pluck($this->field.'_new')->toArray());
+
+                return;
             }
 
-            return $this->value = implode(', ', $this->item->{$this->attribute}->pluck($this->field)->toArray());
+            $this->value = implode(', ', $this->item->{$this->attribute}->pluck($this->field)->toArray());
+
+            return;
         }
+
         $this->value = '';
 
     }
 
     public function saveValue($item, $data): void
     {
-        if(!$this->eventOnSaveForm($item, $data)){
+        if (! $this->eventOnSaveForm($item, $data)) {
             return;
         }
-        if (!$item->id) {
+        if (! $item->id) {
             $item->save();
         }
         $value = array_filter(array_unique($data[$this->attribute] ?? []));
