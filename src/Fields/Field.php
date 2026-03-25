@@ -317,7 +317,7 @@ abstract class Field implements Displayable, Filterable, Validatable
         $this->eventOnShowList();
 
         if ($action && $this->defaultAction) {
-            return $action->getLink($item, $list, $this->value);
+            return $action->getLink($item, $list, isset($this->value) ? (string) $this->value : null);
         }
 
         return $this->value;

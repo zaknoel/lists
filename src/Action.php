@@ -99,11 +99,11 @@ class Action
         return $this;
     }
 
-    public function getLink(Model $item, string $list, string $name = '', string $class = ''): string
+    public function getLink(Model $item, string $list, ?string $name = null, string $class = ''): string
     {
         /** @var Component $component */
         $component = app(ComponentLoaderContract::class)->resolve($list);
-        $label = $name ?: $this->name;
+        $label = $name ?? $this->name ?? '';
 
         return match (true) {
             $this->action === 'show' => '<a class="'.$class.'" href="'.$component->getRoute('lists_detail', $list, $item).'">'.$label.'</a>',
