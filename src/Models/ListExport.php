@@ -42,6 +42,7 @@ class ListExport extends Model
     ];
 
     protected $casts = [
+        'user_id' => 'integer',
         'seen_at' => 'datetime',
     ];
 
