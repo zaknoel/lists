@@ -48,7 +48,7 @@ it('превышение export_async_threshold диспетчит ExportListJob
 
     $this->get(route('lists', 'test-users').'?excel=Y')
         ->assertRedirect()
-        ->assertSessionHas('js_info');
+        ->assertSessionHas('js_success');
 
     Queue::assertPushed(ExportListJob::class);
 });

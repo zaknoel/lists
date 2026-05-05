@@ -185,7 +185,7 @@ class IndexAction
 
             ExportListJob::dispatch($list, $request->all(), $userId, $list);
 
-            return back()->with('js_info', __('lists.export.queued_rows', [
+            return back()->with('js_success', __('lists.export.queued_rows', [
                 'count' => number_format($count),
             ]));
         }
