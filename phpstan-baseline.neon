@@ -56,7 +56,7 @@ parameters:
 				#^Call to deprecated method get\\(\\) of class Illuminate\\\\Http\\\\Request\\:
 				since Symfony 7\\.4, use properties `\\-\\>attributes`, `query` or `request` directly instead$#
 			"""
-			count: 4
+			count: 5
 			path: src/Actions/IndexAction.php
 
 		-

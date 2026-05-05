@@ -184,16 +184,19 @@ class IndexAction
         if ($this->exportService->shouldQueueExportByCount($count)) {
             $userId = (int) auth()->id();
 
+            // Build a human-readable label so the user can identify the export from the banner.
+            $label = $this->buildExportLabel($component, $request);
+
             // Create the tracking record before dispatch so the user sees 'pending' immediately.
             $export = ListExport::create([
                 'user_id' => $userId,
                 'list' => $list,
-                'filename' => $list,
+                'filename' => $label,
                 'status' => ListExport::STATUS_PENDING,
                 'disk' => config('lists.export_disk', 'local'),
             ]);
 
-            ExportListJob::dispatch($list, $request->all(), $userId, $list, $export->id);
+            ExportListJob::dispatch($list, $request->all(), $userId, $label, $export->id);
 
             return back()->with('js_success', __('lists.export.queued_rows', [
                 'count' => number_format($count),
@@ -349,5 +352,74 @@ class IndexAction
     private function isAjaxRequest(Request $request): bool
     {
         return $request->ajax() && $request->header('X-Requested-With') === 'XMLHttpRequest';
+    }
+
+    /**
+     * Builds a human-readable export label from the component label + active filter values.
+     *
+     * Example: "Визиты | Дата: 01.01–31.03.2026 | Менеджер: Иванов"
+     *
+     * The label is stored in ListExport.filename and used as the Excel download name,
+     * so the user can identify the report without opening it.
+     */
+    private function buildExportLabel(Component $component, Request $request): string
+    {
+        $parts = [$component->getLabel()];
+
+        foreach ($component->getFields() as $field) {
+            if (! $field->filterable) {
+                continue;
+            }
+
+            $raw = $request->get($field->attribute);
+
+            if ($raw === null || $raw === '') {
+                continue;
+            }
+
+            $readable = $this->parseFilterValue((string) $raw);
+
+            if ($readable !== '') {
+                $parts[] = $field->name.': '.$readable;
+            }
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    /**
+     * Converts a raw filter URL value to a human-readable string.
+     *
+     * Filter format (set by list.blade.php JS):
+     *   date range  → "f2026-01-01⚬t2026-03-31"
+     *   text        → "contains⚬John" or just "John"
+     *   select/ids  → "val1⚬val2⚬val3"
+     *   number/id   → "f10⚬t99"
+     */
+    private function parseFilterValue(string $raw): string
+    {
+        $separator = '⚬';
+        $parts = explode($separator, $raw);
+        $readable = [];
+
+        foreach ($parts as $part) {
+            $part = trim(strip_tags($part));
+
+            if ($part === '') {
+                continue;
+            }
+
+            // Strip single-char operator prefixes before digits: f2026-01 → 2026-01, t99 → 99
+            $part = (string) preg_replace('/^[ftFT](?=[\d])/', '', $part);
+
+            // Drop pure operator words like "contains", "equals", "gt", "lt"
+            if (preg_match('/^[a-z]{2,10}$/', $part)) {
+                continue;
+            }
+
+            $readable[] = $part;
+        }
+
+        return implode('–', $readable);
     }
 }

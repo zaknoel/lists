@@ -107,7 +107,9 @@ class ExportListJob implements ShouldQueue
 
             $disk = config('lists.export_disk', 'local');
             $path = trim((string) config('lists.export_path', 'exports'), '/');
-            $storedPath = $path.'/'.$this->filename.'-'.now()->format('Ymd-His').'.xlsx';
+            // Use export ID for the stored path — keeps it ASCII-safe regardless of the
+            // human-readable filename which may contain Cyrillic or filter values.
+            $storedPath = $path.'/'.$this->exportId.'-'.now()->format('Ymd-His').'.xlsx';
 
             $writer->write(
                 $component,

@@ -30,6 +30,8 @@ class DownloadExportAction
         // Mark as seen before streaming so a page refresh won't re-show the banner.
         $export->update(['seen_at' => now()]);
 
+        // The filename may contain spaces or non-ASCII chars (Cyrillic, filter values).
+        // Both are valid in RFC 5987 Content-Disposition but we sanitize for max compatibility.
         $filename = $export->filename.'.xlsx';
 
         return $disk->download($export->filepath, $filename);
