@@ -11,6 +11,11 @@ Route::middleware(config('lists.middleware', ['web', 'auth']))->group(function (
     // Групповые действия (bulk actions)
     Route::post('/lists/{list}/action', [ListController::class, 'bulkAction'])->name('lists_action');
 
+    // Скачивание завершённого async-экспорта
+    Route::get('/lists/exports/{exportId}/download', [ListController::class, 'downloadExport'])
+        ->name('lists_export_download')
+        ->where('exportId', '[0-9]+');
+
     // Создание
     Route::get('/lists/{list}/add', [ListController::class, 'create'])->name('lists_add');
     Route::post('/lists/{list}/add', [ListController::class, 'store'])->name('lists_store');

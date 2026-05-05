@@ -42,6 +42,11 @@ return [
     'export' => [
         'queued' => 'Export is being processed. The file will be saved to the server.',
         'queued_rows' => 'Export contains :count rows and has been queued for background processing.',
+        'pending' => 'Export in progress…',
+        'ready' => 'Export ready:',
+        'failed' => 'Export failed:',
+        'download' => 'Download',
+        'dismiss' => 'Dismiss',
     ],
 
     'table' => [

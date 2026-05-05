@@ -73,5 +73,18 @@ class TestCase extends Orchestra
             $table->json('value')->nullable();
             $table->timestamps();
         });
+
+        Schema::create('_list_exports', function (Blueprint $table) {
+            $table->id();
+            $table->unsignedBigInteger('user_id')->index();
+            $table->string('list');
+            $table->string('filename');
+            $table->string('status')->default('pending');
+            $table->string('filepath')->nullable();
+            $table->string('disk')->default('local');
+            $table->text('error_message')->nullable();
+            $table->timestamp('seen_at')->nullable();
+            $table->timestamps();
+        });
     }
 }

@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 use Zak\Lists\Actions\BulkActionRunner;
 use Zak\Lists\Actions\CreateAction;
 use Zak\Lists\Actions\DestroyAction;
+use Zak\Lists\Actions\DownloadExportAction;
 use Zak\Lists\Actions\EditAction;
 use Zak\Lists\Actions\IndexAction;
 use Zak\Lists\Actions\PageAction;
@@ -73,5 +74,10 @@ class ListController
     public function pages(Request $request, string $list, int $item, string $page, PageAction $action): mixed
     {
         return $action->handle($request, $list, $item, $page);
+    }
+
+    public function downloadExport(Request $request, int $exportId, DownloadExportAction $action): mixed
+    {
+        return $action->handle($request, $exportId);
     }
 }

@@ -32,6 +32,12 @@ return [
     'export_path' => 'exports',
 
     /*
+     * Number of days to keep async export records and their files.
+     * Used by `php artisan lists:prune-exports`. Set to 0 to disable pruning.
+     */
+    'export_prune_days' => 7,
+
+    /*
      * The class used to build the Excel export file. Must implement
      * Maatwebsite\Excel\Concerns\FromCollection and accept a prepared
      * flat rows array as its first constructor argument: __construct(array $rows).

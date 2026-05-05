@@ -1,16 +1,17 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Zak\Lists\Jobs;
 
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Auth;
-use Maatwebsite\Excel\Facades\Excel;
 use Throwable;
 use Zak\Lists\Contracts\ComponentLoaderContract;
+use Zak\Lists\Export\StreamingXlsxWriter;
 use Zak\Lists\Fields\Field;
-use Zak\Lists\ListImport;
-use Zak\Lists\Services\ExportService;
+use Zak\Lists\Models\ListExport;
 use Zak\Lists\Services\QueryService;
 
 /**
@@ -18,27 +19,42 @@ use Zak\Lists\Services\QueryService;
  *
  * Компонент пересоздаётся из файла внутри job, поскольку PHP-замыкания
  * не подлежат сериализации. В очередь передаются только примитивные данные.
+ *
+ * Запись ListExport создаётся до dispatch() в IndexAction и передаётся
+ * через $exportId — это позволяет пользователю сразу видеть статус «pending».
  */
 class ExportListJob implements ShouldQueue
 {
     use Queueable;
 
+    /**
+     * No retry on timeout — a timed-out export would just time out again.
+     */
+    public int $tries = 1;
+
+    /**
+     * Allow up to 1 hour for large exports.
+     */
+    public int $timeout = 3600;
+
     /** @var array<string, mixed> */
     public readonly array $requestData;
 
     /**
-     * @param  string  $list  Имя файла компонента (без расширения)
-     * @param  array<string, mixed>  $requestData  Данные запроса для применения фильтров
-     * @param  int  $userId  ID аутентифицированного пользователя
-     * @param  string  $filename  Базовое имя Excel-файла (без расширения)
+     * @param  string  $list  Component file name (without extension)
+     * @param  array<string, mixed>  $requestData  Request data for filter re-application
+     * @param  int  $userId  Authenticated user ID
+     * @param  string  $filename  Base Excel filename (without extension)
+     * @param  int  $exportId  ID of the pre-created ListExport record
      */
     public function __construct(
         public readonly string $list,
         array $requestData,
         public readonly int $userId,
         public readonly string $filename,
+        public readonly int $exportId,
     ) {
-        // Очищаем нерелевантные HTTP-параметры DataTables из данных запроса.
+        // Strip DataTables-specific HTTP params irrelevant to exports.
         $exportKeys = ['excel', 'order', 'length', 'start', 'draw', 'search', 'columns', '_token'];
         $this->requestData = array_diff_key($requestData, array_flip($exportKeys));
     }
@@ -46,62 +62,77 @@ class ExportListJob implements ShouldQueue
     public function handle(
         ComponentLoaderContract $loader,
         QueryService $queryService,
-        ExportService $exportService,
+        StreamingXlsxWriter $writer,
     ): void {
+        $export = ListExport::find($this->exportId);
+
+        if (! $export) {
+            info('Zak.Lists.ExportListJob: ListExport #'.$this->exportId.' not found, skipping.');
+
+            return;
+        }
+
         $user = $this->resolveUser();
 
         if (! $user) {
-            info('Zak.Lists.ExportListJob: пользователь #'.$this->userId.' не найден, задача пропущена.');
+            info('Zak.Lists.ExportListJob: user #'.$this->userId.' not found, skipping.');
+            $export->update(['status' => ListExport::STATUS_FAILED, 'error_message' => 'User not found.']);
 
             return;
         }
 
         Auth::login($user);
 
-        $component = $loader->resolve($this->list, true);
-
-        $request = request()->duplicate(query: $this->requestData);
-
-        $query = $queryService->buildIndexQuery($component, $request);
-
-        $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
-
-        $visibleColumns = $component->options->value['columns'] ?? [];
-
-        /** @var array<int, Field> $fields */
-        $fields = array_values(array_filter(
-            $component->getFields(),
-            fn (Field $field) => $field->show_in_index
-                && ! $field->hide_on_export
-                && (empty($visibleColumns) || in_array($field->attribute, $visibleColumns, false))
-        ));
-
-        foreach ($fields as $field) {
-            $field->generateFilter($query);
-        }
-
-        $query->orderBy($curSort[0], $curSort[1]);
-
-        $rows = $exportService->buildRowsFromQuery(
-            $component,
-            $query,
-            $fields,
-            $this->list,
-            (int) config('lists.export_chunk_size', 500),
-        );
-
-        $disk = config('lists.export_disk', 'local');
-        $path = trim(config('lists.export_path', 'exports'), '/');
-        $storedPath = $path.'/'.$this->filename.'-'.now()->format('Ymd-His').'.xlsx';
-
         try {
-            $prepared = $exportService->prepareExportData($rows, $fields);
-            $importClass = config('lists.import_class', ListImport::class);
+            $component = $loader->resolve($this->list, true);
+            $request = request()->duplicate(query: $this->requestData);
+            $query = $queryService->buildIndexQuery($component, $request);
 
-            Excel::store(new $importClass($prepared), $storedPath, $disk);
-            info('Zak.Lists.ExportListJob: файл сохранён: '.$storedPath);
+            $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
+            $visibleColumns = $component->options->value['columns'] ?? [];
+
+            /** @var array<int, Field> $fields */
+            $fields = array_values(array_filter(
+                $component->getFields(),
+                fn (Field $field) => $field->show_in_index
+                    && ! $field->hide_on_export
+                    && (empty($visibleColumns) || in_array($field->attribute, $visibleColumns, false))
+            ));
+
+            foreach ($fields as $field) {
+                $field->generateFilter($query);
+            }
+
+            $query->orderBy($curSort[0], $curSort[1]);
+
+            $disk = config('lists.export_disk', 'local');
+            $path = trim((string) config('lists.export_path', 'exports'), '/');
+            $storedPath = $path.'/'.$this->filename.'-'.now()->format('Ymd-His').'.xlsx';
+
+            $writer->write(
+                $component,
+                $query,
+                $fields,
+                $this->list,
+                $storedPath,
+                $disk,
+                (int) config('lists.export_chunk_size', 500),
+            );
+
+            $export->update([
+                'status' => ListExport::STATUS_DONE,
+                'filepath' => $storedPath,
+                'disk' => $disk,
+            ]);
+
+            info('Zak.Lists.ExportListJob: file saved: '.$storedPath);
         } catch (Throwable $e) {
-            info('Zak.Lists.ExportListJob: ошибка сохранения: '.$e->getMessage());
+            $export->update([
+                'status' => ListExport::STATUS_FAILED,
+                'error_message' => $e->getMessage(),
+            ]);
+
+            info('Zak.Lists.ExportListJob: error: '.$e->getMessage());
 
             if (isReportable($e)) {
                 report('Zak.Lists.ExportListJob: '.$e->getMessage());
@@ -112,7 +143,7 @@ class ExportListJob implements ShouldQueue
     }
 
     /**
-     * Находит пользователя по ID. Использует стандартный провайдер аутентификации.
+     * Finds the user by ID using the configured auth provider model.
      */
     private function resolveUser(): mixed
     {

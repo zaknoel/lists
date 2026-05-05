@@ -18,6 +18,7 @@ use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Fields\Field;
 use Zak\Lists\Jobs\ExportListJob;
+use Zak\Lists\Models\ListExport;
 use Zak\Lists\Services\ExportService;
 use Zak\Lists\Services\QueryService;
 
@@ -183,7 +184,16 @@ class IndexAction
         if ($this->exportService->shouldQueueExportByCount($count)) {
             $userId = (int) auth()->id();
 
-            ExportListJob::dispatch($list, $request->all(), $userId, $list);
+            // Create the tracking record before dispatch so the user sees 'pending' immediately.
+            $export = ListExport::create([
+                'user_id' => $userId,
+                'list' => $list,
+                'filename' => $list,
+                'status' => ListExport::STATUS_PENDING,
+                'disk' => config('lists.export_disk', 'local'),
+            ]);
+
+            ExportListJob::dispatch($list, $request->all(), $userId, $list, $export->id);
 
             return back()->with('js_success', __('lists.export.queued_rows', [
                 'count' => number_format($count),

@@ -14,6 +14,7 @@
 @endsection
 @section("content")
     <section class="datatables" x-data="{bulk_action:[]}">
+        @livewire('lists-export-status')
         @if($filters)
             <div class="card">
                 <div class="card-header bg-info d-flex align-items-center">

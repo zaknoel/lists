@@ -7,6 +7,9 @@ use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Zak\Lists\Commands\ComponentCommand;
 use Zak\Lists\Commands\MakeFieldCommand;
+use Zak\Lists\Commands\PruneExportsCommand;
+use Zak\Lists\Export\StreamingXlsxWriter;
+use Zak\Lists\Livewire\ExportStatusBanner;
 use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Contracts\FieldServiceContract;
@@ -32,8 +35,9 @@ class ListsServiceProvider extends PackageServiceProvider
             ->hasViews()
             ->hasAssets()
             ->hasTranslations()
-            ->hasCommands(ComponentCommand::class, MakeFieldCommand::class)
+            ->hasCommands(ComponentCommand::class, MakeFieldCommand::class, PruneExportsCommand::class)
             ->hasMigration('create_option_table')
+            ->hasMigration('create_list_exports_table')
             ->publishesServiceProvider('ListsServiceProvider')
             ->hasRoute('lists')
             ->hasInstallCommand(function (InstallCommand $command) {
@@ -56,6 +60,7 @@ class ListsServiceProvider extends PackageServiceProvider
         $this->app->singleton(QueryContract::class, QueryService::class);
         $this->app->singleton(FieldServiceContract::class, FieldService::class);
         $this->app->singleton(ExportService::class, ExportService::class);
+        $this->app->singleton(StreamingXlsxWriter::class, StreamingXlsxWriter::class);
 
         // Алиасы для удобного использования через app()
         $this->app->alias(ComponentLoaderContract::class, 'lists.loader');
@@ -70,6 +75,11 @@ class ListsServiceProvider extends PackageServiceProvider
         // in any host application without requiring published translation files.
         $this->callAfterResolving('translator', function ($translator) {
             $translator->getLoader()->addPath($this->package->basePath('/../resources/lang'));
+        });
+
+        // Register the Livewire component after Livewire itself has been booted.
+        $this->callAfterResolving('livewire', function () {
+            \Livewire\Livewire::component('lists-export-status', ExportStatusBanner::class);
         });
     }
 
