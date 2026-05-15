@@ -85,8 +85,18 @@ class ExportListJob implements ShouldQueue
 
         try {
             $component = $loader->resolve($this->list, true);
-            $request = request()->duplicate(query: $this->requestData);
-            $query = $queryService->buildIndexQuery($component, $request);
+
+            // All Field::generateFilter() implementations read filters via the global request()
+            // helper (app('request')), not from a Request object passed as a parameter.
+            // We must replace the container's request input so filters are applied correctly.
+            // Null/empty values are stripped to avoid applying empty filter conditions.
+            $filterData = array_filter(
+                $this->requestData,
+                static fn (mixed $v): bool => $v !== null && $v !== '',
+            );
+            request()->replace($filterData);
+
+            $query = $queryService->buildIndexQuery($component, request());
 
             $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
             $visibleColumns = $component->options->value['columns'] ?? [];
