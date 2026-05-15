@@ -112,7 +112,7 @@ class ExportListJob implements ShouldQueue
             foreach ($fields as $field) {
                 $field->generateFilter($query);
             }
-            info('Zak.Lists.ExportListJob: query built, starting export: '.$query->toRawSql());
+            //info('Zak.Lists.ExportListJob: query built, starting export: '.$query->toRawSql());
             $query->orderBy($curSort[0], $curSort[1]);
 
             $disk = config('lists.export_disk', 'local');
@@ -137,7 +137,7 @@ class ExportListJob implements ShouldQueue
                 'disk' => $disk,
             ]);
 
-            info('Zak.Lists.ExportListJob: file saved: '.$storedPath);
+            //info('Zak.Lists.ExportListJob: file saved: '.$storedPath);
         } catch (Throwable $e) {
             $export->update([
                 'status' => ListExport::STATUS_FAILED,
