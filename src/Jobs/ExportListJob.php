@@ -102,7 +102,7 @@ class ExportListJob implements ShouldQueue
             foreach ($fields as $field) {
                 $field->generateFilter($query);
             }
-
+            info('Zak.Lists.ExportListJob: query built, starting export: '.$query->toRawSql());
             $query->orderBy($curSort[0], $curSort[1]);
 
             $disk = config('lists.export_disk', 'local');
@@ -140,8 +140,33 @@ class ExportListJob implements ShouldQueue
                 report('Zak.Lists.ExportListJob: '.$e->getMessage());
             }
 
-            throw $e;
+            // Do not re-throw: status is already persisted and error reported.
+            // Re-throwing with $tries=1 only produces a noisy MaxAttemptsExceededException.
         }
+    }
+
+    /**
+     * Called by the queue worker when the job is killed outside of handle()
+     * (timeout via SIGTERM, OOM, MaxAttemptsExceededException, etc.).
+     * Ensures the ListExport record never stays stuck in 'pending'.
+     */
+    public function failed(Throwable $exception): void
+    {
+        $export = ListExport::find($this->exportId);
+
+        if (! $export) {
+            return;
+        }
+
+        // Only update if the handle() catch block did not already set a terminal status.
+        if ($export->status === ListExport::STATUS_PENDING) {
+            $export->update([
+                'status' => ListExport::STATUS_FAILED,
+                'error_message' => $exception->getMessage(),
+            ]);
+        }
+
+        info('Zak.Lists.ExportListJob.failed: '.$exception->getMessage());
     }
 
     /**
