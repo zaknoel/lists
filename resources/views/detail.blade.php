@@ -16,6 +16,7 @@
     @if($component->userCanDelete($item))
         <form method="post" class="d-inline" action="{{$component->getRoute('lists_delete',$list, $item)}}">
             @csrf
+            <input type="hidden" name="_method" value="DELETE" />
             <button onclick="return confirm('Вы уверены, что хотите удалить этот элемент?')" class="btn btn-danger">
                 <i class="ti ti-trash fs-5"></i>
                 Удалить
