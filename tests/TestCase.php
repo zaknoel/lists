@@ -79,10 +79,17 @@ class TestCase extends Orchestra
             $table->unsignedBigInteger('user_id')->index();
             $table->string('list');
             $table->string('filename');
+            $table->string('format', 10)->default('xlsx');
+            $table->json('columns')->nullable();
+            $table->json('request_data')->nullable();
+            $table->unsignedBigInteger('total_rows')->default(0);
+            $table->unsignedBigInteger('processed_rows')->default(0);
             $table->string('status')->default('pending');
             $table->string('filepath')->nullable();
             $table->string('disk')->default('local');
             $table->text('error_message')->nullable();
+            $table->timestamp('started_at')->nullable();
+            $table->timestamp('finished_at')->nullable();
             $table->timestamp('seen_at')->nullable();
             $table->timestamps();
         });

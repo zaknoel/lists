@@ -8,10 +8,12 @@ use Zak\Lists\Actions\CreateAction;
 use Zak\Lists\Actions\DestroyAction;
 use Zak\Lists\Actions\DownloadExportAction;
 use Zak\Lists\Actions\EditAction;
+use Zak\Lists\Actions\ExportStatusAction;
 use Zak\Lists\Actions\IndexAction;
 use Zak\Lists\Actions\PageAction;
 use Zak\Lists\Actions\SaveOptionsAction;
 use Zak\Lists\Actions\ShowAction;
+use Zak\Lists\Actions\StartExportAction;
 use Zak\Lists\Actions\StoreAction;
 use Zak\Lists\Actions\UpdateAction;
 use Zak\Lists\Requests\ListBulkActionRequest;
@@ -19,6 +21,7 @@ use Zak\Lists\Requests\ListDestroyRequest;
 use Zak\Lists\Requests\ListOptionsRequest;
 use Zak\Lists\Requests\ListStoreRequest;
 use Zak\Lists\Requests\ListUpdateRequest;
+use Zak\Lists\Requests\StartExportRequest;
 
 /**
  * Тонкий контроллер: принимает HTTP-запрос и делегирует его соответствующему Action-классу.
@@ -79,5 +82,20 @@ class ListController
     public function downloadExport(Request $request, int $exportId, DownloadExportAction $action): mixed
     {
         return $action->handle($request, $exportId);
+    }
+
+    public function startExport(StartExportRequest $request, string $list, StartExportAction $action): mixed
+    {
+        return $action->handle($request, $list);
+    }
+
+    public function exportStatus(Request $request, int $exportId, ExportStatusAction $action): mixed
+    {
+        return $action->show($request, $exportId);
+    }
+
+    public function cancelExport(Request $request, int $exportId, ExportStatusAction $action): mixed
+    {
+        return $action->cancel($request, $exportId);
     }
 }

@@ -13,17 +13,33 @@ return [
     'export_chunk_size' => 500,
 
     /*
-     * Hard row limit for synchronous exports. Requests exceeding this value return
-     * a js_error flash instead of attempting an in-process download.
+     * Hard row limit for an export. Larger exports are rejected before they are queued.
      * Set to 0 to disable the limit.
      */
     'max_export_rows' => 50000,
 
     /*
-     * Row threshold above which an export is automatically offloaded to the queue.
-     * Requires a properly configured queue worker. Set to 0 to always export synchronously.
+     * Deprecated: every export now runs on the queue. Kept for backward compatibility only.
      */
-    'export_async_threshold' => 5000,
+    'export_async_threshold' => 0,
+
+    /*
+     * Queue connection (null = application default) and queue name for export jobs.
+     * Run a dedicated worker/supervisor for this queue (e.g. a Horizon supervisor with a long timeout).
+     */
+    'export_connection' => null,
+    'export_queue' => 'exports',
+
+    /*
+     * Allowed export formats and the CSV field delimiter (semicolon opens correctly in Excel for RU locales).
+     */
+    'export_formats' => ['xlsx', 'csv'],
+    'csv_delimiter' => ';',
+
+    /*
+     * Hours after which an export stuck in pending/processing is marked as failed by `lists:prune-exports`.
+     */
+    'export_stale_hours' => 3,
 
     /*
      * Filesystem disk and directory used by queued export jobs to store generated files.

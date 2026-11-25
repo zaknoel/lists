@@ -3,12 +3,10 @@
 namespace Zak\Lists\Actions;
 
 use Illuminate\Contracts\View\View;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
-use Symfony\Component\HttpFoundation\BinaryFileResponse;
 use Throwable;
 use Yajra\DataTables\DataTables;
 use Yajra\DataTables\EloquentDataTable;
@@ -17,7 +15,6 @@ use Zak\Lists\Component;
 use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Fields\Field;
-use Zak\Lists\Jobs\ExportListJob;
 use Zak\Lists\Models\ListExport;
 use Zak\Lists\Services\ExportService;
 use Zak\Lists\Services\QueryService;
@@ -32,10 +29,11 @@ class IndexAction
         private readonly QueryService $queryService,
         private readonly AuthorizationContract $authService,
         private readonly ExportService $exportService,
+        private readonly StartExportAction $startExportAction,
     ) {}
 
     /**
-     * @return View|JsonResponse|BinaryFileResponse
+     * @return View|JsonResponse|RedirectResponse
      */
     public function handle(Request $request, string $list): mixed
     {
@@ -45,28 +43,30 @@ class IndexAction
         $isAjax = $this->isAjaxRequest($request);
         $isExport = $request->get('excel') === 'Y';
 
-        $visibleFields = $this->getVisibleFields($component, $isExport);
+        $visibleFields = $this->getVisibleFields($component);
 
-        if ($isAjax || $isExport) {
-            return $this->handleDataRequest($request, $component, $list, $visibleFields, $isAjax, $isExport);
+        if ($isExport && ! $isAjax) {
+            return $this->handleLegacyExport($request, $component, $list);
+        }
+
+        if ($isAjax) {
+            return $this->handleDataRequest($request, $component, $list, $visibleFields);
         }
 
         return $this->renderIndexView($request, $component, $list, $visibleFields);
     }
 
     /**
-     * Обрабатывает AJAX-запрос DataTables или запрос на экспорт.
+     * Обрабатывает AJAX-запрос DataTables.
      *
      * @param  array<int, Field>  $fields
-     * @return JsonResponse|BinaryFileResponse
+     * @return JsonResponse
      */
     private function handleDataRequest(
         Request $request,
         Component $component,
         string $list,
         array $fields,
-        bool $isAjax,
-        bool $isExport,
     ): mixed {
         $this->updateSortPreference($request, $component);
         $this->updateLengthPreference($request, $component);
@@ -80,13 +80,6 @@ class IndexAction
 
         foreach ($fields as $field) {
             $field->generateFilter($query);
-        }
-
-        if ($isExport) {
-            $exportQuery = clone $query;
-            $exportQuery->orderBy($curSort[0], $curSort[1]);
-
-            return $this->handleExport($component, $exportQuery, $fields, $list, $request);
         }
 
         // SQL Server forbids ORDER BY in subqueries without TOP/OFFSET.
@@ -139,79 +132,43 @@ class IndexAction
             );
         }
 
-        if ($isAjax) {
-            try {
-                return $datatable->make(true);
-            } catch (Throwable $e) {
-                info('Zak.Lists.IndexAction SQL: '.$query->toRawSql());
+        try {
+            return $datatable->make(true);
+        } catch (Throwable $e) {
+            info('Zak.Lists.IndexAction SQL: '.$query->toRawSql());
 
-                if (isReportable($e)) {
-                    report('Zak.Lists.IndexAction: '.$e->getMessage());
-                }
-
-                throw $e;
+            if (isReportable($e)) {
+                report('Zak.Lists.IndexAction: '.$e->getMessage());
             }
-        }
 
-        throw new \LogicException('Export flow should be handled before DataTables rendering.');
+            throw $e;
+        }
     }
 
     /**
-     * Применяет лимит строк и стратегию async перед синхронной выгрузкой.
-     *
-     * @param  array<int, Field>  $fields
+     * Обратная совместимость: старые ссылки `?excel=Y` ставят экспорт всех видимых колонок в xlsx
+     * в очередь и возвращают пользователя на страницу списка (прогресс виден в баннере).
      */
-    private function handleExport(
-        Component $component,
-        Builder $query,
-        array $fields,
-        string $list,
-        Request $request,
-    ): BinaryFileResponse|RedirectResponse {
-        $count = $this->exportService->countRows($query);
-
-        // Жёсткий лимит: если строк слишком много — отклоняем сразу.
-        if ($this->exportService->exceedsExportLimitByCount($count)) {
-            $max = (int) config('lists.max_export_rows', 50000);
-
-            return back()->with('js_error', __('lists.errors.export_limit_exceeded', [
-                'count' => number_format($count),
-                'max' => number_format($max),
-            ]));
-        }
-
-        // Мягкий порог: если строк больше порога — ставим в очередь.
-        if ($this->exportService->shouldQueueExportByCount($count)) {
-            $userId = (int) auth()->id();
-
-            // Build a human-readable label so the user can identify the export from the banner.
-            $label = $this->buildExportLabel($component, $request);
-
-            // Create the tracking record before dispatch so the user sees 'pending' immediately.
-            $export = ListExport::create([
-                'user_id' => $userId,
-                'list' => $list,
-                'filename' => $label,
-                'status' => ListExport::STATUS_PENDING,
-                'disk' => config('lists.export_disk', 'local'),
-            ]);
-
-            ExportListJob::dispatch($list, $request->all(), $userId, $label, $export->id);
-
-            return back()->with('js_success', __('lists.export.queued_rows', [
-                'count' => number_format($count),
-            ]));
-        }
-
-        return $this->exportService->downloadQuerySafe(
+    private function handleLegacyExport(Request $request, Component $component, string $list): RedirectResponse
+    {
+        $export = $this->startExportAction->start(
             $component,
-            $query,
-            $fields,
             $list,
-            $list,
-            $query->toRawSql(),
-            (int) config('lists.export_chunk_size', 500),
+            ListExport::FORMAT_XLSX,
+            $this->exportService->defaultColumns($component),
+            $this->exportService->extractFilters($request->all()),
         );
+
+        if ($export === null) {
+            return back()->with('js_error', __('lists.errors.export_limit_exceeded', [
+                'count' => '',
+                'max' => number_format((int) config('lists.max_export_rows', 50000)),
+            ]));
+        }
+
+        return back()->with('js_success', __('lists.export.queued_rows', [
+            'count' => number_format($export->total_rows),
+        ]));
     }
 
     /**
@@ -248,7 +205,7 @@ class IndexAction
      *
      * @return array<int, Field>
      */
-    private function getVisibleFields(Component $component, bool $forExport = false): array
+    private function getVisibleFields(Component $component): array
     {
         $visibleColumns = $component->options->value['columns'] ?? [];
 
@@ -257,10 +214,6 @@ class IndexAction
             fn (Field $field) => $field->show_in_index
                 && (empty($visibleColumns) || in_array($field->attribute, $visibleColumns, false))
         );
-
-        if ($forExport) {
-            $fields = array_filter($fields, fn (Field $field) => ! $field->hide_on_export);
-        }
 
         return array_values($fields);
     }
@@ -352,74 +305,5 @@ class IndexAction
     private function isAjaxRequest(Request $request): bool
     {
         return $request->ajax() && $request->header('X-Requested-With') === 'XMLHttpRequest';
-    }
-
-    /**
-     * Builds a human-readable export label from the component label + active filter values.
-     *
-     * Example: "Визиты | Дата: 01.01–31.03.2026 | Менеджер: Иванов"
-     *
-     * The label is stored in ListExport.filename and used as the Excel download name,
-     * so the user can identify the report without opening it.
-     */
-    private function buildExportLabel(Component $component, Request $request): string
-    {
-        $parts = [$component->getLabel()];
-
-        foreach ($component->getFields() as $field) {
-            if (! $field->filterable) {
-                continue;
-            }
-
-            $raw = $request->get($field->attribute);
-
-            if ($raw === null || $raw === '') {
-                continue;
-            }
-
-            $readable = $this->parseFilterValue((string) $raw);
-
-            if ($readable !== '') {
-                $parts[] = $field->name.': '.$readable;
-            }
-        }
-
-        return implode(' | ', $parts);
-    }
-
-    /**
-     * Converts a raw filter URL value to a human-readable string.
-     *
-     * Filter format (set by list.blade.php JS):
-     *   date range  → "f2026-01-01⚬t2026-03-31"
-     *   text        → "contains⚬John" or just "John"
-     *   select/ids  → "val1⚬val2⚬val3"
-     *   number/id   → "f10⚬t99"
-     */
-    private function parseFilterValue(string $raw): string
-    {
-        $separator = '⚬';
-        $parts = explode($separator, $raw);
-        $readable = [];
-
-        foreach ($parts as $part) {
-            $part = trim(strip_tags($part));
-
-            if ($part === '') {
-                continue;
-            }
-
-            // Strip single-char operator prefixes before digits: f2026-01 → 2026-01, t99 → 99
-            $part = (string) preg_replace('/^[ftFT](?=[\d])/', '', $part);
-
-            // Drop pure operator words like "contains", "equals", "gt", "lt"
-            if (preg_match('/^[a-z]{2,10}$/', $part)) {
-                continue;
-            }
-
-            $readable[] = $part;
-        }
-
-        return implode('–', $readable);
     }
 }

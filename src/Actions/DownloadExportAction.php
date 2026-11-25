@@ -32,8 +32,18 @@ class DownloadExportAction
 
         // The filename may contain spaces or non-ASCII chars (Cyrillic, filter values).
         // Both are valid in RFC 5987 Content-Disposition but we sanitize for max compatibility.
-        $filename = $export->filename.'.xlsx';
+        $filename = $this->safeFilename($export->filename).'.'.$export->format;
 
-        return $disk->download($export->filepath, $filename);
+        return $disk->download($export->filepath, $filename, ['Content-Type' => $export->mimeType()]);
+    }
+
+    /**
+     * Removes characters that are illegal in file names on common platforms.
+     */
+    private function safeFilename(string $name): string
+    {
+        $clean = trim((string) preg_replace('/[\\\\\/:*?"<>|\\x00-\\x1F]+/u', ' ', $name));
+
+        return $clean === '' ? 'export' : mb_substr($clean, 0, 150);
     }
 }

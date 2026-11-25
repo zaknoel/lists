@@ -8,20 +8,20 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Support\Facades\Auth;
 use Throwable;
+use Zak\Lists\Component;
 use Zak\Lists\Contracts\ComponentLoaderContract;
+use Zak\Lists\Export\ExportWriter;
+use Zak\Lists\Export\StreamingCsvWriter;
 use Zak\Lists\Export\StreamingXlsxWriter;
 use Zak\Lists\Fields\Field;
 use Zak\Lists\Models\ListExport;
-use Zak\Lists\Services\QueryService;
+use Zak\Lists\Services\ExportService;
 
 /**
- * Фоновый экспорт списка в Excel.
+ * Background list export (xlsx / csv) with row-level progress reporting.
  *
- * Компонент пересоздаётся из файла внутри job, поскольку PHP-замыкания
- * не подлежат сериализации. В очередь передаются только примитивные данные.
- *
- * Запись ListExport создаётся до dispatch() в IndexAction и передаётся
- * через $exportId — это позволяет пользователю сразу видеть статус «pending».
+ * Only the ListExport id is serialized: columns, format and filters are stored on the
+ * record, and the component is re-created from its file (PHP closures are not serializable).
  */
 class ExportListJob implements ShouldQueue
 {
@@ -37,152 +37,174 @@ class ExportListJob implements ShouldQueue
      */
     public int $timeout = 3600;
 
-    /** @var array<string, mixed> */
-    public readonly array $requestData;
+    public function __construct(public readonly int $exportId)
+    {
+        $this->onQueue((string) config('lists.export_queue', 'exports'));
 
-    /**
-     * @param  string  $list  Component file name (without extension)
-     * @param  array<string, mixed>  $requestData  Request data for filter re-application
-     * @param  int  $userId  Authenticated user ID
-     * @param  string  $filename  Base Excel filename (without extension)
-     * @param  int  $exportId  ID of the pre-created ListExport record
-     */
-    public function __construct(
-        public readonly string $list,
-        array $requestData,
-        public readonly int $userId,
-        public readonly string $filename,
-        public readonly int $exportId,
-    ) {
-        // Strip DataTables-specific HTTP params irrelevant to exports.
-        $exportKeys = ['excel', 'order', 'length', 'start', 'draw', 'search', 'columns', '_token'];
-        $this->requestData = array_diff_key($requestData, array_flip($exportKeys));
+        $connection = config('lists.export_connection');
+
+        if ($connection) {
+            $this->onConnection((string) $connection);
+        }
     }
 
-    public function handle(
-        ComponentLoaderContract $loader,
-        QueryService $queryService,
-        StreamingXlsxWriter $writer,
-    ): void {
+    public function handle(ExportService $exportService): void
+    {
         $export = ListExport::find($this->exportId);
 
-        if (! $export) {
-            info('Zak.Lists.ExportListJob: ListExport #'.$this->exportId.' not found, skipping.');
-
+        if (! $export || $export->status !== ListExport::STATUS_PENDING) {
             return;
         }
 
-        $user = $this->resolveUser();
+        $user = $this->resolveUser($export->user_id);
 
         if (! $user) {
-            info('Zak.Lists.ExportListJob: user #'.$this->userId.' not found, skipping.');
-            $export->update(['status' => ListExport::STATUS_FAILED, 'error_message' => 'User not found.']);
+            $this->markFailed($export, 'User not found.');
 
             return;
         }
 
-        Auth::login($user);
+        $export->update([
+            'status' => ListExport::STATUS_PROCESSING,
+            'started_at' => now(),
+            'processed_rows' => 0,
+        ]);
+
+        $originalInput = request()->all();
+
+        // Long-lived workers keep singletons between jobs: drop the cached components
+        // so per-user options and filters of a previous job cannot leak into this one.
+        app()->forgetInstance(ComponentLoaderContract::class);
+
+        $previousUser = Auth::guard()->user();
+
+        Auth::setUser($user);
 
         try {
-            $component = $loader->resolve($this->list, true);
-
-            // All Field::generateFilter() implementations read filters via the global request()
-            // helper (app('request')), not from a Request object passed as a parameter.
-            // We must replace the container's request input so filters are applied correctly.
-            // Null/empty values are stripped to avoid applying empty filter conditions.
-            $filterData = array_filter(
-                $this->requestData,
-                static fn (mixed $v): bool => $v !== null && $v !== '',
-            );
-            request()->replace($filterData);
-
-            $query = $queryService->buildIndexQuery($component, request());
-
-            $curSort = $component->options->value['curSort'] ?? ['id', 'desc'];
-            $visibleColumns = $component->options->value['columns'] ?? [];
-
-            /** @var array<int, Field> $fields */
-            $fields = array_values(array_filter(
-                $component->getFields(),
-                fn (Field $field) => $field->show_in_index
-                    && ! $field->hide_on_export
-                    && (empty($visibleColumns) || in_array($field->attribute, $visibleColumns, false))
-            ));
-
-            foreach ($fields as $field) {
-                $field->generateFilter($query);
-            }
-            //info('Zak.Lists.ExportListJob: query built, starting export: '.$query->toRawSql());
-            $query->orderBy($curSort[0], $curSort[1]);
-
-            $disk = config('lists.export_disk', 'local');
-            $path = trim((string) config('lists.export_path', 'exports'), '/');
-            // Use export ID for the stored path — keeps it ASCII-safe regardless of the
-            // human-readable filename which may contain Cyrillic or filter values.
-            $storedPath = $path.'/'.$this->exportId.'-'.now()->format('Ymd-His').'.xlsx';
-
-            $writer->write(
-                $component,
-                $query,
-                $fields,
-                $this->list,
-                $storedPath,
-                $disk,
-                (int) config('lists.export_chunk_size', 500),
-            );
-
-            $export->update([
-                'status' => ListExport::STATUS_DONE,
-                'filepath' => $storedPath,
-                'disk' => $disk,
-            ]);
-
-            //info('Zak.Lists.ExportListJob: file saved: '.$storedPath);
+            $this->run($export, $exportService);
         } catch (Throwable $e) {
-            $export->update([
-                'status' => ListExport::STATUS_FAILED,
-                'error_message' => $e->getMessage(),
-            ]);
+            $this->markFailed($export, $e->getMessage());
 
             info('Zak.Lists.ExportListJob: error: '.$e->getMessage());
 
             if (isReportable($e)) {
-                report('Zak.Lists.ExportListJob: '.$e->getMessage());
+                report($e);
             }
 
             // Do not re-throw: status is already persisted and error reported.
-            // Re-throwing with $tries=1 only produces a noisy MaxAttemptsExceededException.
+        } finally {
+            request()->replace($originalInput);
+            app()->forgetInstance(ComponentLoaderContract::class);
+
+            $guard = Auth::guard();
+
+            if ($previousUser !== null) {
+                $guard->setUser($previousUser);
+            } elseif (method_exists($guard, 'forgetUser')) {
+                $guard->forgetUser();
+            }
         }
     }
 
     /**
      * Called by the queue worker when the job is killed outside of handle()
-     * (timeout via SIGTERM, OOM, MaxAttemptsExceededException, etc.).
-     * Ensures the ListExport record never stays stuck in 'pending'.
+     * (timeout via SIGTERM, MaxAttemptsExceededException, etc.).
+     * Ensures the ListExport record never stays stuck in an active status.
      */
     public function failed(Throwable $exception): void
     {
         $export = ListExport::find($this->exportId);
 
-        if (! $export) {
-            return;
-        }
-
-        // Only update if the handle() catch block did not already set a terminal status.
-        if ($export->status === ListExport::STATUS_PENDING) {
-            $export->update([
-                'status' => ListExport::STATUS_FAILED,
-                'error_message' => $exception->getMessage(),
-            ]);
+        if ($export && $export->isActive()) {
+            $this->markFailed($export, $exception->getMessage());
         }
 
         info('Zak.Lists.ExportListJob.failed: '.$exception->getMessage());
     }
 
+    private function run(ListExport $export, ExportService $exportService): void
+    {
+        $loader = app(ComponentLoaderContract::class);
+        $component = $loader->resolve($export->list, true);
+
+        $query = $exportService->makeQuery($component, $exportService->extractFilters($export->request_data ?? []));
+
+        $fields = $this->resolveExportFields($exportService, $component, $export->columns);
+
+        if ($fields === []) {
+            $this->markFailed($export, 'No columns selected for export.');
+
+            return;
+        }
+
+        $disk = (string) ($export->disk ?: config('lists.export_disk', 'local'));
+        $path = trim((string) config('lists.export_path', 'exports'), '/');
+        // ASCII-safe stored name: the human-readable filename may contain Cyrillic or filter values.
+        $storedPath = $path.'/'.$export->id.'-'.now()->format('Ymd-His').'.'.$export->format;
+
+        $stored = $this->writerFor($export->format)->write(
+            $component,
+            $query,
+            $fields,
+            $export->list,
+            $storedPath,
+            $disk,
+            max(1, (int) config('lists.export_chunk_size', 500)),
+            function (int $processed) use ($export): bool {
+                ListExport::whereKey($export->id)
+                    ->where('status', ListExport::STATUS_PROCESSING)
+                    ->update(['processed_rows' => $processed, 'updated_at' => now()]);
+
+                return ListExport::whereKey($export->id)->value('status') === ListExport::STATUS_PROCESSING;
+            },
+        );
+
+        if ($stored === null) {
+            return;
+        }
+
+        $finalCount = ListExport::whereKey($export->id)->value('processed_rows');
+
+        $export->forceFill([
+            'status' => ListExport::STATUS_DONE,
+            'filepath' => $stored,
+            'disk' => $disk,
+            'processed_rows' => max((int) $finalCount, $export->total_rows),
+            'finished_at' => now(),
+        ])->save();
+    }
+
     /**
-     * Finds the user by ID using the configured auth provider model.
+     * @param  array<int, string>|null  $selected
+     * @return array<int, Field>
      */
-    private function resolveUser(): mixed
+    private function resolveExportFields(ExportService $exportService, Component $component, ?array $selected): array
+    {
+        $whitelist = $selected ?: $exportService->defaultColumns($component);
+
+        return array_values(array_filter(
+            $exportService->exportableFields($component),
+            static fn (Field $field): bool => in_array($field->attribute, $whitelist, false)
+        ));
+    }
+
+    private function writerFor(string $format): ExportWriter
+    {
+        return $format === ListExport::FORMAT_CSV
+            ? app(StreamingCsvWriter::class)
+            : app(StreamingXlsxWriter::class);
+    }
+
+    private function markFailed(ListExport $export, string $message): void
+    {
+        $export->forceFill([
+            'status' => ListExport::STATUS_FAILED,
+            'error_message' => $message,
+            'finished_at' => now(),
+        ])->save();
+    }
+
+    private function resolveUser(int $userId): mixed
     {
         $provider = config('auth.providers.'.config('auth.guards.web.provider', 'users').'.model');
 
@@ -190,6 +212,6 @@ class ExportListJob implements ShouldQueue
             return null;
         }
 
-        return $provider::find($this->userId);
+        return $provider::find($userId);
     }
 }

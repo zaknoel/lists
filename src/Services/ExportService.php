@@ -16,6 +16,145 @@ use Zak\Lists\ListImport;
 class ExportService
 {
     /**
+     * Request keys that belong to DataTables / transport and must not be treated as list filters.
+     *
+     * @var array<int, string>
+     */
+    public const NON_FILTER_KEYS = ['excel', 'order', 'length', 'start', 'draw', 'search', 'columns', '_token', 'format', 'query'];
+
+    /**
+     * Fields that can be exported: shown in the list and not hidden for export.
+     *
+     * @return array<int, Field>
+     */
+    public function exportableFields(Component $component): array
+    {
+        return array_values(array_filter(
+            $component->getFields(),
+            static fn (Field $field): bool => $field->show_in_index && ! $field->hide_on_export
+        ));
+    }
+
+    /**
+     * Attributes of the columns currently visible in the user's table (default export selection).
+     *
+     * @return array<int, string>
+     */
+    public function defaultColumns(Component $component): array
+    {
+        $visible = $component->options->value['columns'] ?? [];
+
+        return array_values(array_map(
+            static fn (Field $field): string => $field->attribute,
+            array_filter(
+                $this->exportableFields($component),
+                static fn (Field $field): bool => empty($visible) || in_array($field->attribute, $visible, false)
+            )
+        ));
+    }
+
+    /**
+     * Drops transport keys and empty values from raw request data, leaving only list filters.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function extractFilters(array $data): array
+    {
+        return array_filter(
+            array_diff_key($data, array_flip(self::NON_FILTER_KEYS)),
+            static fn (mixed $value): bool => $value !== null && $value !== '',
+        );
+    }
+
+    /**
+     * Builds the filtered and sorted list query for the current user.
+     *
+     * Filters are applied to every column shown in the table (not only the exported ones), so the
+     * file always matches what the user sees. Field::generateFilter() reads the global request(),
+     * hence the input is replaced here; callers that need the original input must restore it.
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function makeQuery(Component $component, array $filters): Builder
+    {
+        request()->replace($filters);
+
+        $query = app(QueryService::class)->buildIndexQuery($component, request());
+
+        $visible = $component->options->value['columns'] ?? [];
+
+        foreach ($component->getFields() as $field) {
+            if ($field->show_in_index && (empty($visible) || in_array($field->attribute, $visible, false))) {
+                $field->generateFilter($query);
+            }
+        }
+
+        $curSort = $component->options->value['curSort'] ?? [];
+        $curSort = (is_array($curSort) && count($curSort) >= 2) ? $curSort : ['id', 'desc'];
+
+        return $query->orderBy($curSort[0], $curSort[1]);
+    }
+
+    /**
+     * Human-readable export label: component label + active filter values.
+     *
+     * Example: "Визиты | Дата: 01.01–31.03.2026 | Менеджер: Иванов"
+     *
+     * @param  array<string, mixed>  $filters
+     */
+    public function buildLabel(Component $component, array $filters): string
+    {
+        $parts = [$component->getLabel()];
+
+        foreach ($component->getFields() as $field) {
+            if (! $field->filterable) {
+                continue;
+            }
+
+            $raw = $filters[$field->attribute] ?? null;
+
+            if (! is_string($raw) || $raw === '') {
+                continue;
+            }
+
+            $readable = $this->parseFilterValue($raw);
+
+            if ($readable !== '') {
+                $parts[] = $field->name.': '.$readable;
+            }
+        }
+
+        return implode(' | ', $parts);
+    }
+
+    /**
+     * Converts a raw filter URL value (e.g. "f2026-01-01⚬t2026-03-31") to a readable string.
+     */
+    public function parseFilterValue(string $raw): string
+    {
+        $readable = [];
+
+        foreach (explode('⚬', $raw) as $part) {
+            $part = trim(strip_tags($part));
+
+            if ($part === '') {
+                continue;
+            }
+
+            $part = (string) preg_replace('/^[ftFT](?=[\d])/', '', $part);
+
+            if (preg_match('/^[a-z]{2,10}$/', $part)) {
+                continue;
+            }
+
+            $readable[] = $part;
+        }
+
+        return implode('–', $readable);
+    }
+
+    /**
      * Скачивает данные в формате xlsx.
      *
      * @param  array<int, mixed>  $rows

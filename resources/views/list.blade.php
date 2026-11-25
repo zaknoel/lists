@@ -200,6 +200,7 @@
         </div>
         <!-- /.modal-dialog -->
     </div>
+    @include('lists::export-modal')
 @endsection
 @push('styles')
     <link rel="stylesheet" href="/vendor/lists/datatables.net-bs5/css/dataTables.bootstrap5.min.css">
@@ -326,11 +327,11 @@
         DataTable.ext.buttons.excel = {
             className: 'buttons-excel btn btn-dark mr-1',
             text: function (dt) {
-                return '<i class="ti ti-file-spreadsheet"></i> Скачать как Excel';
+                return '<i class="ti ti-file-spreadsheet"></i> ' + @json(__('lists.export.open'));
             },
 
             action: function (e, dt, button, config) {
-                window.location = '{!! getCurPageParams(['excel'=>"Y"]) !!}';
+                window.listsExport.open();
             }
         };
         function executeAction(el, action){

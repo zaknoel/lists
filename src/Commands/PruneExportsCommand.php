@@ -32,6 +32,8 @@ class PruneExportsCommand extends Command
             return self::FAILURE;
         }
 
+        $this->failStaleExports();
+
         $cutoff = now()->subDays($days);
 
         $exports = ListExport::where('created_at', '<', $cutoff)->get();
@@ -63,5 +65,29 @@ class PruneExportsCommand extends Command
 
         return self::SUCCESS;
     }
-}
 
+    /**
+     * Marks exports that have been pending/processing for too long as failed (worker died, queue flushed, etc.).
+     */
+    private function failStaleExports(): void
+    {
+        $hours = (int) config('lists.export_stale_hours', 3);
+
+        if ($hours <= 0) {
+            return;
+        }
+
+        $stale = ListExport::query()
+            ->whereIn('status', ListExport::ACTIVE_STATUSES)
+            ->where('updated_at', '<', now()->subHours($hours))
+            ->update([
+                'status' => ListExport::STATUS_FAILED,
+                'error_message' => 'Export timed out or the worker stopped unexpectedly.',
+                'finished_at' => now(),
+            ]);
+
+        if ($stale > 0) {
+            $this->warn("Marked {$stale} stalled exports as failed.");
+        }
+    }
+}

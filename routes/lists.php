@@ -16,6 +16,17 @@ Route::middleware(config('lists.middleware', ['web', 'auth']))->group(function (
         ->name('lists_export_download')
         ->where('exportId', '[0-9]+');
 
+    // Экспорт: запуск, статус (polling) и отмена
+    Route::get('/lists/exports/{exportId}/status', [ListController::class, 'exportStatus'])
+        ->name('lists_export_status')
+        ->where('exportId', '[0-9]+');
+
+    Route::post('/lists/exports/{exportId}/cancel', [ListController::class, 'cancelExport'])
+        ->name('lists_export_cancel')
+        ->where('exportId', '[0-9]+');
+
+    Route::post('/lists/{list}/export', [ListController::class, 'startExport'])->name('lists_export_start');
+
     // Создание
     Route::get('/lists/{list}/add', [ListController::class, 'create'])->name('lists_add');
     Route::post('/lists/{list}/add', [ListController::class, 'store'])->name('lists_store');

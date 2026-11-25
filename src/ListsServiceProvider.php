@@ -2,18 +2,20 @@
 
 namespace Zak\Lists;
 
+use Livewire\Livewire;
 use Spatie\LaravelPackageTools\Commands\InstallCommand;
 use Spatie\LaravelPackageTools\Package;
 use Spatie\LaravelPackageTools\PackageServiceProvider;
 use Zak\Lists\Commands\ComponentCommand;
 use Zak\Lists\Commands\MakeFieldCommand;
 use Zak\Lists\Commands\PruneExportsCommand;
-use Zak\Lists\Export\StreamingXlsxWriter;
-use Zak\Lists\Livewire\ExportStatusBanner;
 use Zak\Lists\Contracts\AuthorizationContract;
 use Zak\Lists\Contracts\ComponentLoaderContract;
 use Zak\Lists\Contracts\FieldServiceContract;
 use Zak\Lists\Contracts\QueryContract;
+use Zak\Lists\Export\StreamingCsvWriter;
+use Zak\Lists\Export\StreamingXlsxWriter;
+use Zak\Lists\Livewire\ExportStatusBanner;
 use Zak\Lists\Services\AuthorizationService;
 use Zak\Lists\Services\ComponentLoader;
 use Zak\Lists\Services\ExportService;
@@ -38,6 +40,7 @@ class ListsServiceProvider extends PackageServiceProvider
             ->hasCommands(ComponentCommand::class, MakeFieldCommand::class, PruneExportsCommand::class)
             ->hasMigration('create_option_table')
             ->hasMigration('create_list_exports_table')
+            ->hasMigration('add_progress_to_list_exports_table')
             ->publishesServiceProvider('ListsServiceProvider')
             ->hasRoute('lists')
             ->hasInstallCommand(function (InstallCommand $command) {
@@ -61,6 +64,7 @@ class ListsServiceProvider extends PackageServiceProvider
         $this->app->singleton(FieldServiceContract::class, FieldService::class);
         $this->app->singleton(ExportService::class, ExportService::class);
         $this->app->singleton(StreamingXlsxWriter::class, StreamingXlsxWriter::class);
+        $this->app->singleton(StreamingCsvWriter::class, StreamingCsvWriter::class);
 
         // Алиасы для удобного использования через app()
         $this->app->alias(ComponentLoaderContract::class, 'lists.loader');
@@ -79,7 +83,7 @@ class ListsServiceProvider extends PackageServiceProvider
 
         // Register the Livewire component after Livewire itself has been booted.
         $this->callAfterResolving('livewire', function () {
-            \Livewire\Livewire::component('lists-export-status', ExportStatusBanner::class);
+            Livewire::component('lists-export-status', ExportStatusBanner::class);
         });
     }
 
